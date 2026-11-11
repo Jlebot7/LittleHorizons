@@ -2,9 +2,6 @@ package com.littlehorizons.erp.model.resource;
 
 import java.time.LocalDate;
 
-/**
- * Domain entity representing an Educational Resource (Book, Microscope, Tablet, etc.).
- */
 public class Resource {
 
     private Integer idResource;
@@ -14,9 +11,8 @@ public class Resource {
     private String description;
     private LocalDate acquisitionDate;
     private String physicalLocation;
-    private String status; // Disponible, Prestado, En Mantenimiento, Dado de Baja
+    private String status; 
 
-    // Joined fields
     private String categoryName;
 
     public Resource() {

@@ -9,9 +9,6 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Data Access Object for Student Attendance tracking.
- */
 public class AttendanceDAO {
 
     public boolean recordAttendance(Attendance attendance) {

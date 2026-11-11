@@ -1,8 +1,5 @@
 package com.littlehorizons.erp.model.academic;
 
-/**
- * Domain entity representing an Academic Grade Level (e.g., Preescolar, Primero, ..., Once).
- */
 public class AcademicGrade {
 
     private Integer idGrade;

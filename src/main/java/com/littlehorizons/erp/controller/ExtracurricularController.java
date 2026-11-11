@@ -12,9 +12,6 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
-/**
- * Controller for Extracurricular Activities: Clubs, Memberships, Events, and Competitions.
- */
 public class ExtracurricularController {
 
     private final ExtracurricularService extracurricularService;

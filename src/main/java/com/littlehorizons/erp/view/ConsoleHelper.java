@@ -1,12 +1,7 @@
 package com.littlehorizons.erp.view;
-
-/**
- * Visual formatting helper for clean, professional console presentation.
- */
 public final class ConsoleHelper {
 
     private ConsoleHelper() {
-        // Prevent instantiation
     }
 
     public static void printHeader(String title, String subtitle) {

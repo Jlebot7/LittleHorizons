@@ -13,9 +13,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-/**
- * Data Access Object for School Resources (Library, Labs, Tech) and Loans.
- */
 public class ResourceDAO {
 
     public Integer saveResource(Resource resource) {
@@ -126,7 +123,6 @@ public class ResourceDAO {
         return list;
     }
 
-    // Loans to Students
     public boolean loanToStudent(int resourceId, int studentId, LocalDate loanDate, LocalDate expectedReturn, String obs) {
         String sqlLoan = "INSERT INTO prestamos_estudiante (id_recurso, id_estudiante, fecha_prestamo, fecha_devolucion_esperada, estado_prestamo, observaciones) " +
                 "VALUES (?, ?, ?, ?, 'Activo', ?)";
@@ -207,7 +203,6 @@ public class ResourceDAO {
         }
     }
 
-    // Loans to Teachers
     public boolean loanToTeacher(int resourceId, int teacherId, LocalDate loanDate, LocalDate expectedReturn, String obs) {
         String sqlLoan = "INSERT INTO prestamos_profesor (id_recurso, id_profesor, fecha_prestamo, fecha_devolucion_esperada, estado_prestamo, observaciones) " +
                 "VALUES (?, ?, ?, ?, 'Activo', ?)";

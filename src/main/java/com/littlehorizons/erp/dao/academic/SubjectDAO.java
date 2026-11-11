@@ -10,9 +10,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-/**
- * Data Access Object for Academic Subjects and Grades.
- */
 public class SubjectDAO {
 
     public Integer save(Subject subject) {

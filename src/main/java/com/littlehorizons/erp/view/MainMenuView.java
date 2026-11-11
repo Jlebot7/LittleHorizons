@@ -4,10 +4,6 @@ import com.littlehorizons.erp.config.DatabaseConfig;
 import com.littlehorizons.erp.controller.*;
 import com.littlehorizons.erp.service.*;
 import com.littlehorizons.erp.util.ConsoleInputReader;
-
-/**
- * Main application menu controller and navigation dispatcher.
- */
 public class MainMenuView {
 
     private final StudentController studentController;

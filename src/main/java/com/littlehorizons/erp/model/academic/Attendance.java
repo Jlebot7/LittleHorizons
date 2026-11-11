@@ -2,20 +2,16 @@ package com.littlehorizons.erp.model.academic;
 
 import java.time.LocalDate;
 
-/**
- * Domain entity representing daily student attendance per subject.
- */
 public class Attendance {
 
     private Integer idAttendance;
     private Integer idStudent;
     private Integer idSubject;
     private LocalDate attendanceDate;
-    private String status; // Presente, Ausente, Tardanza, Excusa Médica
+    private String status; 
     private String observations;
     private Integer recordedBy;
 
-    // Joined fields
     private String studentName;
     private String subjectName;
 

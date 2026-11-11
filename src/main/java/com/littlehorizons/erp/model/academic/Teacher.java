@@ -2,9 +2,6 @@ package com.littlehorizons.erp.model.academic;
 
 import java.time.LocalDate;
 
-/**
- * Domain entity representing a Teacher / Professor.
- */
 public class Teacher {
 
     private Integer idTeacher;

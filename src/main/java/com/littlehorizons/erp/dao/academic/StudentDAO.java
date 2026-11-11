@@ -9,9 +9,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-/**
- * Data Access Object for Student entities and student-guardian relationships.
- */
 public class StudentDAO {
 
     public Integer save(Student student) {

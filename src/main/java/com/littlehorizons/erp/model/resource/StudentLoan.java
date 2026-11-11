@@ -2,9 +2,6 @@ package com.littlehorizons.erp.model.resource;
 
 import java.time.LocalDate;
 
-/**
- * Domain entity representing a Resource Loan to a Student.
- */
 public class StudentLoan {
 
     private Integer idLoan;
@@ -13,10 +10,9 @@ public class StudentLoan {
     private LocalDate loanDate;
     private LocalDate expectedReturnDate;
     private LocalDate actualReturnDate;
-    private String status; // Activo, Devuelto, Vencido
+    private String status; 
     private String observations;
 
-    // Joined fields
     private String resourceName;
     private String studentName;
 

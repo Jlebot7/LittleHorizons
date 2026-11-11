@@ -2,22 +2,18 @@ package com.littlehorizons.erp.model.extracurricular;
 
 import java.time.LocalDate;
 
-/**
- * Domain entity representing a School Event.
- */
 public class SchoolEvent {
 
     private Integer idEvent;
     private String eventName;
     private String description;
-    private String eventType; // Académico, Cultural, Deportivo, Social, Científico
+    private String eventType; 
     private LocalDate eventDate;
     private String location;
     private Boolean hasCompetition;
     private Integer idOrganizer;
     private Boolean isActive;
 
-    // Joined fields
     private String organizerName;
 
     public SchoolEvent() {

@@ -13,9 +13,6 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
-/**
- * Controller for Financial Management, Payments, and DIAN Electronic Invoices.
- */
 public class FinanceController {
 
     private final FinanceService financeService;
@@ -193,7 +190,6 @@ public class FinanceController {
         int year = ConsoleInputReader.readInt("Año lectivo: ", 2020, 2030);
         String period = ConsoleInputReader.readString("Período (I / II / III / IV): ").toUpperCase();
 
-        // 2 is Pensión Mensual in standard concepts
         List<Student> defaulters = financeService.getDefaulterStudents(2, year, period);
 
         if (defaulters.isEmpty()) {

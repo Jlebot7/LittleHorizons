@@ -11,9 +11,6 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
-/**
- * Controller for Student Management and Guardianship operations.
- */
 public class StudentController {
 
     private final AcademicService academicService;

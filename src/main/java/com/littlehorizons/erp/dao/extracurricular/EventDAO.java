@@ -10,9 +10,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-/**
- * Data Access Object for School Events and Event Participants.
- */
 public class EventDAO {
 
     public Integer save(SchoolEvent event) {

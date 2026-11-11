@@ -10,10 +10,6 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Properties;
 
-/**
- * Thread-safe Database Configuration and HikariCP Connection Pool Manager.
- * Implements Singleton pattern to manage JDBC connections efficiently.
- */
 public final class DatabaseConfig {
 
     private static HikariDataSource dataSource;
@@ -25,7 +21,7 @@ public final class DatabaseConfig {
     }
 
     private DatabaseConfig() {
-        // Singleton, prevent instantiation
+        
     }
 
     private static synchronized void initializeDataSource() {
@@ -40,7 +36,6 @@ public final class DatabaseConfig {
             LoggerUtil.error("Failed to load database.properties", e);
         }
 
-        // Environment variables override properties if set
         String envUrl = System.getenv("DB_URL");
         String envUser = System.getenv("DB_USER");
         String envPassword = System.getenv("DB_PASSWORD");
@@ -60,7 +55,6 @@ public final class DatabaseConfig {
             config.setConnectionTimeout(Long.parseLong(props.getProperty("db.pool.connectionTimeout", "10000")));
             config.setPoolName("LittleHorizonsHikariPool");
 
-            // Recommended MySQL performance parameters
             config.addDataSourceProperty("cachePrepStmts", "true");
             config.addDataSourceProperty("prepStmtCacheSize", "250");
             config.addDataSourceProperty("prepStmtCacheSqlLimit", "2048");
@@ -72,12 +66,6 @@ public final class DatabaseConfig {
         }
     }
 
-    /**
-     * Obtains an active connection from the pool.
-     *
-     * @return java.sql.Connection
-     * @throws SQLException If database is unavailable or credentials fail
-     */
     public static Connection getConnection() throws SQLException {
         if (dataSource == null || dataSource.isClosed()) {
             initializeDataSource();
@@ -88,11 +76,6 @@ public final class DatabaseConfig {
         return dataSource.getConnection();
     }
 
-    /**
-     * Tests the database connectivity.
-     *
-     * @return true if connection can be established, false otherwise.
-     */
     public static boolean testConnection() {
         try (Connection conn = getConnection()) {
             return conn != null && !conn.isClosed();
@@ -102,9 +85,6 @@ public final class DatabaseConfig {
         }
     }
 
-    /**
-     * Reconfigures credentials at runtime and reinitializes pool.
-     */
     public static synchronized boolean reconfigure(String url, String user, String password) {
         close();
         try {
@@ -133,9 +113,6 @@ public final class DatabaseConfig {
         return configuredUser;
     }
 
-    /**
-     * Closes the connection pool on application shutdown.
-     */
     public static synchronized void close() {
         if (dataSource != null && !dataSource.isClosed()) {
             dataSource.close();

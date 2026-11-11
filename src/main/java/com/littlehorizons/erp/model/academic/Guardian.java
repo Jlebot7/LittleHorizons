@@ -1,8 +1,5 @@
 package com.littlehorizons.erp.model.academic;
 
-/**
- * Domain entity representing a Guardian or Legal Tutor.
- */
 public class Guardian {
 
     private Integer idGuardian;

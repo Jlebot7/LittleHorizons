@@ -1,18 +1,14 @@
 package com.littlehorizons.erp.model.extracurricular;
 
-/**
- * Domain entity representing an Event Participation record.
- */
 public class EventParticipant {
 
     private Integer idParticipation;
     private Integer idEvent;
     private Integer idStudent;
-    private String participationRole; // Participante, Competidor, Organizador, Asistente
-    private String positionObtained; // 1er Lugar, 2do Lugar, 3er Lugar, Participante
+    private String participationRole; 
+    private String positionObtained; 
     private String observations;
 
-    // Joined fields
     private String eventName;
     private String studentName;
 

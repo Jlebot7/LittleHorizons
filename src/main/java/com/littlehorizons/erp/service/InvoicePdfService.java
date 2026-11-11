@@ -31,11 +31,6 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Optional;
-
-/**
- * Service responsible for generating DIAN-compliant Electronic Invoices
- * formatted as PDF documents with simulated CUFE and QR Code.
- */
 public class InvoicePdfService {
 
     private static final String INVOICES_DIR = "invoices";
@@ -64,12 +59,6 @@ public class InvoicePdfService {
         }
     }
 
-    /**
-     * Generates a DIAN Electronic Invoice PDF for a confirmed payment and persists the record.
-     *
-     * @param payment The confirmed payment entity
-     * @return The generated Invoice entity with file path and CUFE
-     */
     public Optional<Invoice> generateInvoiceForPayment(Payment payment) {
         if (payment == null) {
             LoggerUtil.error("Cannot generate invoice for null payment.");
@@ -87,7 +76,6 @@ public class InvoicePdfService {
             String invoiceNumber = String.format("FE-LH-2024-%04d", seq);
             LocalDate issueDate = payment.getPaymentDate() != null ? payment.getPaymentDate() : LocalDate.now();
 
-            // Retrieve student and guardian info safely
             Student student = null;
             if (payment.getIdStudent() != null) {
                 try {
@@ -137,9 +125,6 @@ public class InvoicePdfService {
         }
     }
 
-    /**
-     * Direct generation of PDF invoice without mandatory DB lookup.
-     */
     public Optional<Invoice> generateInvoiceDirect(String invoiceNumber, LocalDate issueDate,
                                                    Student student, Guardian guardian,
                                                    String conceptName, Payment payment) {
@@ -167,7 +152,6 @@ public class InvoicePdfService {
             try {
                 paymentDAO.saveInvoice(invoice);
             } catch (Exception ignored) {
-                // If DB is offline, file is still successfully created
             }
 
             LoggerUtil.info("Generated PDF invoice: " + filePath + " with CUFE: " + cufe);
@@ -192,7 +176,6 @@ public class InvoicePdfService {
         Font normalFont = FontFactory.getFont(FontFactory.HELVETICA, 9, Color.BLACK);
         Font cufeFont = FontFactory.getFont(FontFactory.COURIER, 7, Color.DARK_GRAY);
 
-        // Header Table
         PdfPTable headerTable = new PdfPTable(2);
         headerTable.setWidthPercentage(100);
         headerTable.setWidths(new float[]{65, 35});
@@ -220,7 +203,6 @@ public class InvoicePdfService {
         document.add(headerTable);
         document.add(new Paragraph(" "));
 
-        // Client & Student Details Table
         PdfPTable clientTable = new PdfPTable(2);
         clientTable.setWidthPercentage(100);
         clientTable.setWidths(new float[]{50, 50});
@@ -246,7 +228,6 @@ public class InvoicePdfService {
         document.add(clientTable);
         document.add(new Paragraph(" "));
 
-        // Items Table
         PdfPTable itemsTable = new PdfPTable(5);
         itemsTable.setWidthPercentage(100);
         itemsTable.setWidths(new float[]{10, 45, 15, 15, 15});
@@ -266,7 +247,6 @@ public class InvoicePdfService {
         itemsTable.addCell(new Phrase(String.format("COP $%,.2f", amt), normalFont));
         itemsTable.addCell(new Phrase(String.format("COP $%,.2f", amt), normalFont));
 
-        // Subtotals
         PdfPCell empty = new PdfPCell(new Phrase(""));
         empty.setColspan(3);
         empty.setBorder(Rectangle.NO_BORDER);
@@ -295,7 +275,6 @@ public class InvoicePdfService {
         document.add(itemsTable);
         document.add(new Paragraph(" "));
 
-        // Footer with CUFE and QR Code
         PdfPTable footerTable = new PdfPTable(2);
         footerTable.setWidthPercentage(100);
         footerTable.setWidths(new float[]{75, 25});

@@ -11,9 +11,6 @@ import com.littlehorizons.erp.view.ConsoleHelper;
 import java.time.LocalDate;
 import java.util.List;
 
-/**
- * Controller for Resource Management (Library, Laboratory, Sports, Technology) and Loans.
- */
 public class ResourceController {
 
     private final ResourceService resourceService;

@@ -3,9 +3,6 @@ package com.littlehorizons.erp.model.academic;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
-/**
- * Domain entity representing an Academic Grade Record (0.0 to 5.0).
- */
 public class AcademicRecord {
 
     private Integer idRecord;
@@ -13,12 +10,11 @@ public class AcademicRecord {
     private Integer idSubject;
     private Integer idTeacher;
     private Integer academicYear;
-    private String academicPeriod; // I, II, III, IV, Final
+    private String academicPeriod; 
     private BigDecimal gradeValue;
     private String observations;
     private LocalDate recordDate;
 
-    // Descriptive fields for joined queries
     private String studentName;
     private String subjectName;
     private String teacherName;

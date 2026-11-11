@@ -8,9 +8,6 @@ import com.littlehorizons.erp.view.ConsoleHelper;
 import java.time.LocalDate;
 import java.util.List;
 
-/**
- * Controller for Teacher Directory and Academic Workload Assignment.
- */
 public class TeacherController {
 
     private final AcademicService academicService;

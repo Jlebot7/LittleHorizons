@@ -10,11 +10,6 @@ import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
-
-/**
- * Service encapsulating business logic for academic management,
- * grade calculations using Stream API, and attendance tracking.
- */
 public class AcademicService {
 
     private final StudentDAO studentDAO;
@@ -32,8 +27,6 @@ public class AcademicService {
         this.academicRecordDAO = new AcademicRecordDAO();
         this.attendanceDAO = new AttendanceDAO();
     }
-
-    // --- Student & Guardian Operations ---
 
     public Integer registerStudent(Student student) {
         if (!ValidationUtil.isNotEmpty(student.getFirstName()) ||
@@ -81,8 +74,6 @@ public class AcademicService {
         return studentDAO.enrollInGrade(studentId, gradeId, year);
     }
 
-    // --- Teacher & Subject Operations ---
-
     public Integer registerTeacher(Teacher teacher) {
         if (!ValidationUtil.isNotEmpty(teacher.getFirstName()) ||
                 !ValidationUtil.isValidEmail(teacher.getEmail())) {
@@ -119,8 +110,6 @@ public class AcademicService {
         return subjectDAO.enrollStudent(studentId, subjectId, year, period, section);
     }
 
-    // --- Grades & Calculation Logic with Java Stream API ---
-
     public boolean recordGrade(AcademicRecord record) {
         if (!ValidationUtil.isValidGrade(record.getGradeValue())) {
             throw new IllegalArgumentException("La nota debe estar entre 0.0 y 5.0 según el estándar colombiano.");
@@ -132,15 +121,6 @@ public class AcademicService {
         return academicRecordDAO.findByStudent(studentId);
     }
 
-    /**
-     * Calculates the overall GPA (Grade Point Average) for a student across all subjects
-     * in a given period using Java Stream API.
-     *
-     * @param studentId Student ID
-     * @param year Academic year
-     * @param period Academic period (I, II, III, IV)
-     * @return Calculated average BigDecimal (scale 2), or 0.00 if no records exist
-     */
     public BigDecimal calculateStudentPeriodAverage(int studentId, int year, String period) {
         List<AcademicRecord> records = academicRecordDAO.findByStudent(studentId);
 
@@ -157,14 +137,6 @@ public class AcademicService {
                 .orElse(BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP));
     }
 
-    /**
-     * Calculates the course/class average for a specific subject in a period using Stream API.
-     *
-     * @param subjectId Subject ID
-     * @param year Academic year
-     * @param period Academic period
-     * @return Subject course average
-     */
     public BigDecimal calculateSubjectCourseAverage(int subjectId, int year, String period) {
         List<AcademicRecord> records = academicRecordDAO.findBySubjectAndPeriod(subjectId, year, period);
 
@@ -180,8 +152,6 @@ public class AcademicService {
                 .orElse(BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP));
     }
 
-    // --- Attendance Operations ---
-
     public boolean registerAttendance(Attendance attendance) {
         return attendanceDAO.recordAttendance(attendance);
     }
@@ -190,10 +160,6 @@ public class AcademicService {
         return attendanceDAO.findByStudent(studentId);
     }
 
-    /**
-     * Generates a report of students with excessive absences (>3 absences in recorded attendance)
-     * using Java Streams and collectors.
-     */
     public Map<Integer, Long> getStudentsWithExcessiveAbsences(long threshold) {
         List<Attendance> allRecent = attendanceDAO.findAllRecent();
 

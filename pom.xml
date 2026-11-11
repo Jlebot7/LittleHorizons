@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.littlehorizons</groupId>
-    <artifactId>com.littlehorizons.erp</artifactId>
+    <artifactId>LittleHorizons</artifactId>
     <version>1.0-SNAPSHOT</version>
 
     <properties>

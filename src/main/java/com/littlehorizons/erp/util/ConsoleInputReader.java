@@ -3,17 +3,11 @@ package com.littlehorizons.erp.util;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Scanner;
-
-/**
- * Robust console input reader that validates user input, prevents infinite loops,
- * and handles data conversions cleanly.
- */
 public final class ConsoleInputReader {
 
     private static final Scanner SCANNER = new Scanner(System.in);
 
     private ConsoleInputReader() {
-        // Prevent instantiation
     }
 
     public static String readString(String prompt) {

@@ -9,9 +9,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-/**
- * Data Access Object for Teacher entities and academic assignments.
- */
 public class TeacherDAO {
 
     public Integer save(Teacher teacher) {

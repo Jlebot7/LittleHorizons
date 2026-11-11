@@ -8,9 +8,6 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Data Access Object for Student Grades and Academic Records.
- */
 public class AcademicRecordDAO {
 
     public boolean saveOrUpdate(AcademicRecord record) {

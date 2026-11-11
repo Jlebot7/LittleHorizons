@@ -11,11 +11,6 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
-
-/**
- * Service orchestrating financial payments, concept management,
- * electronic invoice issuance, and delinquent student detection.
- */
 public class FinanceService {
 
     private final PaymentDAO paymentDAO;
@@ -36,19 +31,11 @@ public class FinanceService {
         return paymentDAO.findConceptById(id);
     }
 
-    /**
-     * Registers a payment, assigns an automated sequential receipt number,
-     * and automatically generates an electronic PDF invoice with simulated CUFE and QR code.
-     *
-     * @param payment Payment details
-     * @return Generated Invoice if successful, empty if failed
-     */
     public Optional<Invoice> processPaymentAndInvoice(Payment payment) {
         if (payment.getAmountPaid() == null || payment.getAmountPaid().compareTo(BigDecimal.ZERO) <= 0) {
             throw new IllegalArgumentException("El monto a pagar debe ser mayor a cero.");
         }
 
-        // Generate receipt number if not present
         if (payment.getReceiptNumber() == null || payment.getReceiptNumber().trim().isEmpty()) {
             int seq = paymentDAO.findAllPayments().size() + 1;
             payment.setReceiptNumber(String.format("REC-%d-%05d",
@@ -83,11 +70,6 @@ public class FinanceService {
         return paymentDAO.findAllInvoices();
     }
 
-    /**
-     * Identifies active students who do not have a recorded payment
-     * for a specific recurring concept (e.g. Pensión Mensual) in the given year/period.
-     * Implemented using Java Stream API.
-     */
     public List<Student> getDefaulterStudents(int conceptId, int year, String period) {
         List<Student> allStudents = studentDAO.findAll();
         List<Payment> allPayments = paymentDAO.findAllPayments();

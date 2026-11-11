@@ -3,9 +3,6 @@ package com.littlehorizons.erp;
 import com.littlehorizons.erp.util.LoggerUtil;
 import com.littlehorizons.erp.view.MainMenuView;
 
-/**
- * Main application entry point for Little Horizons ERP System.
- */
 public class Main {
 
     public static void main(String[] args) {

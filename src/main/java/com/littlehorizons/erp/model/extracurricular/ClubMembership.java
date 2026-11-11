@@ -2,20 +2,16 @@ package com.littlehorizons.erp.model.extracurricular;
 
 import java.time.LocalDate;
 
-/**
- * Domain entity representing a Student Membership in a Club.
- */
 public class ClubMembership {
 
     private Integer idMembership;
     private Integer idStudent;
     private Integer idClub;
     private LocalDate joinDate;
-    private String status; // Activa, Retirada
+    private String status; 
     private LocalDate withdrawalDate;
     private String withdrawalReason;
 
-    // Joined fields
     private String studentName;
     private String clubName;
 

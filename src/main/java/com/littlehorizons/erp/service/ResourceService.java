@@ -11,11 +11,6 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
-
-/**
- * Service orchestrating Library and Laboratory Resources,
- * Student & Teacher Loans, and Overdue Loan tracking.
- */
 public class ResourceService {
 
     private final ResourceDAO resourceDAO;
@@ -44,9 +39,6 @@ public class ResourceService {
         return resourceDAO.findById(id);
     }
 
-    /**
-     * Loans a resource to a student, verifying that the resource is currently Available.
-     */
     public boolean loanToStudent(int resourceId, int studentId, LocalDate loanDate, LocalDate returnExpected, String obs) {
         Optional<Resource> resourceOpt = resourceDAO.findById(resourceId);
         if (resourceOpt.isEmpty()) {
@@ -66,9 +58,6 @@ public class ResourceService {
         return resourceDAO.returnStudentLoan(loanId);
     }
 
-    /**
-     * Loans a resource to a teacher, verifying that the resource is currently Available.
-     */
     public boolean loanToTeacher(int resourceId, int teacherId, LocalDate loanDate, LocalDate returnExpected, String obs) {
         Optional<Resource> resourceOpt = resourceDAO.findById(resourceId);
         if (resourceOpt.isEmpty()) {
@@ -96,9 +85,6 @@ public class ResourceService {
         return resourceDAO.findActiveTeacherLoans();
     }
 
-    /**
-     * Finds overdue loans to students using Java Stream API.
-     */
     public List<StudentLoan> getOverdueStudentLoans() {
         LocalDate today = LocalDate.now();
         return resourceDAO.findActiveStudentLoans().stream()
@@ -106,9 +92,6 @@ public class ResourceService {
                 .collect(Collectors.toList());
     }
 
-    /**
-     * Finds overdue loans to teachers using Java Stream API.
-     */
     public List<TeacherLoan> getOverdueTeacherLoans() {
         LocalDate today = LocalDate.now();
         return resourceDAO.findActiveTeacherLoans().stream()

@@ -6,11 +6,6 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.time.format.ResolverStyle;
 import java.util.regex.Pattern;
-
-/**
- * Validation utility for validating inputs, business constraints,
- * and data types across the application.
- */
 public final class ValidationUtil {
 
     private static final Pattern EMAIL_PATTERN = Pattern.compile("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$");
@@ -23,7 +18,6 @@ public final class ValidationUtil {
     private static final BigDecimal MAX_GRADE = new BigDecimal("5.0");
 
     private ValidationUtil() {
-        // Prevent instantiation
     }
 
     public static boolean isNotEmpty(String text) {

@@ -11,9 +11,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-/**
- * Controller for Academic Management: Subjects, Enrollments, Grades, Calculations, and Attendance.
- */
 public class AcademicController {
 
     private final AcademicService academicService;

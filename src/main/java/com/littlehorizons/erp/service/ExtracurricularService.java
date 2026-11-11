@@ -10,10 +10,6 @@ import com.littlehorizons.erp.util.ValidationUtil;
 
 import java.util.List;
 import java.util.Optional;
-
-/**
- * Service encapsulating business rules for Extracurricular Clubs and Events.
- */
 public class ExtracurricularService {
 
     private final ClubDAO clubDAO;
@@ -23,9 +19,6 @@ public class ExtracurricularService {
         this.clubDAO = new ClubDAO();
         this.eventDAO = new EventDAO();
     }
-
-    // --- Club Operations ---
-
     public Integer registerClub(Club club) {
         if (!ValidationUtil.isNotEmpty(club.getClubName())) {
             throw new IllegalArgumentException("El nombre del club es obligatorio.");
@@ -36,18 +29,9 @@ public class ExtracurricularService {
     public List<Club> getAllClubs() {
         return clubDAO.findAll();
     }
-
     public Optional<Club> getClubById(int id) {
         return clubDAO.findById(id);
     }
-
-    /**
-     * Enrolls a student in a club after verifying maximum capacity constraint.
-     *
-     * @param studentId Student ID
-     * @param clubId Club ID
-     * @return true if successfully enrolled, false if capacity is exceeded or error
-     */
     public boolean enrollStudentInClub(int studentId, int clubId) {
         Optional<Club> clubOpt = clubDAO.findById(clubId);
         if (clubOpt.isEmpty()) {
@@ -71,8 +55,6 @@ public class ExtracurricularService {
     public List<ClubMembership> getClubMembers(int clubId) {
         return clubDAO.findMembershipsByClub(clubId);
     }
-
-    // --- Event Operations ---
 
     public Integer registerEvent(SchoolEvent event) {
         if (!ValidationUtil.isNotEmpty(event.getEventName()) || event.getEventDate() == null) {

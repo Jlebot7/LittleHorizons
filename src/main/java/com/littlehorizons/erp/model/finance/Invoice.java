@@ -2,9 +2,6 @@ package com.littlehorizons.erp.model.finance;
 
 import java.time.LocalDate;
 
-/**
- * Domain entity representing a DIAN Electronic Invoice.
- */
 public class Invoice {
 
     private Integer idInvoice;
@@ -15,7 +12,6 @@ public class Invoice {
     private String pdfFileName;
     private String filePath;
 
-    // Joined fields
     private String studentName;
     private String guardianName;
     private String conceptName;

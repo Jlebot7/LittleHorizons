@@ -10,9 +10,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-/**
- * Data Access Object for Guardian entities.
- */
 public class GuardianDAO {
 
     public Integer save(Guardian guardian) {

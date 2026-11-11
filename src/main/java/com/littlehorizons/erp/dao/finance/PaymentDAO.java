@@ -13,9 +13,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-/**
- * Data Access Object for Financial Payments, Concepts, and Invoices.
- */
 public class PaymentDAO {
 
     public Integer savePayment(Payment payment) {

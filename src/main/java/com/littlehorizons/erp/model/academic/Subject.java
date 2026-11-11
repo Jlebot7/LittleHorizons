@@ -1,8 +1,5 @@
 package com.littlehorizons.erp.model.academic;
 
-/**
- * Domain entity representing an Academic Subject.
- */
 public class Subject {
 
     private Integer idSubject;

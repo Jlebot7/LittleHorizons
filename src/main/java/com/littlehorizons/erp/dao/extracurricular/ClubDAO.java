@@ -11,9 +11,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-/**
- * Data Access Object for Extracurricular Clubs and Memberships.
- */
 public class ClubDAO {
 
     public Integer save(Club club) {

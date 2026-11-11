@@ -2,9 +2,6 @@ package com.littlehorizons.erp.model.finance;
 
 import java.math.BigDecimal;
 
-/**
- * Domain entity representing a Payment Concept (tuition, uniform, transportation, etc.).
- */
 public class PaymentConcept {
 
     private Integer idConcept;

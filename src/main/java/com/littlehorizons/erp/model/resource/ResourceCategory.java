@@ -1,8 +1,5 @@
 package com.littlehorizons.erp.model.resource;
 
-/**
- * Domain entity representing a Resource Category (Book, Lab, Sports, Tech, Didactic).
- */
 public class ResourceCategory {
 
     private Integer idCategory;

@@ -1,8 +1,5 @@
 package com.littlehorizons.erp.model.extracurricular;
 
-/**
- * Domain entity representing an Extracurricular Club.
- */
 public class Club {
 
     private Integer idClub;
@@ -13,7 +10,6 @@ public class Club {
     private String meetingSchedule;
     private Boolean isActive;
 
-    // Joined fields
     private String supervisorName;
     private Integer enrolledCount;
 

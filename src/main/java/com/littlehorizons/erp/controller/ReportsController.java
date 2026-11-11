@@ -15,9 +15,6 @@ import com.littlehorizons.erp.view.ConsoleHelper;
 import java.math.BigDecimal;
 import java.util.List;
 
-/**
- * Controller for General Reports and Institutional Metrics Dashboard.
- */
 public class ReportsController {
 
     private final AcademicService academicService;

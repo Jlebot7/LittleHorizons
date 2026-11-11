@@ -3,9 +3,6 @@ package com.littlehorizons.erp.model.finance;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
-/**
- * Domain entity representing a Payment transaction.
- */
 public class Payment {
 
     private Integer idPago;
@@ -14,13 +11,12 @@ public class Payment {
     private Integer idConcept;
     private BigDecimal amountPaid;
     private LocalDate paymentDate;
-    private String paymentMethod; // Efectivo, Transferencia, Tarjeta Débito, Tarjeta Crédito, Cheque
+    private String paymentMethod; 
     private String receiptNumber;
     private Integer academicYear;
-    private String academicPeriod; // I, II, III, IV, Anual
+    private String academicPeriod; 
     private String notes;
 
-    // Joined fields
     private String studentName;
     private String guardianName;
     private String conceptName;

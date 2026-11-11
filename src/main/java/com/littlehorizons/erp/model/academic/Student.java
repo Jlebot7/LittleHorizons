@@ -2,9 +2,6 @@ package com.littlehorizons.erp.model.academic;
 
 import java.time.LocalDate;
 
-/**
- * Domain entity representing a Student enrolled in Little Horizons School.
- */
 public class Student {
 
     private Integer idStudent;
