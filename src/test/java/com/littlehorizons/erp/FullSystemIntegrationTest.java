@@ -59,14 +59,16 @@ public class FullSystemIntegrationTest {
     void testAcademicStreamCalculations() {
         try {
             AcademicService academicService = new AcademicService();
-            Map<Integer, Double> gpaMap = academicService.calculateGpaByStudent(2024, "I");
-            assertNotNull(gpaMap);
+            BigDecimal avg = academicService.calculateStudentPeriodAverage(1, 2024, "I");
+            assertNotNull(avg);
+            assertTrue(avg.compareTo(BigDecimal.ZERO) >= 0);
 
-            List<Student> ranking = academicService.getTopRankedStudents(2024, "I", 5);
-            assertNotNull(ranking);
+            BigDecimal courseAvg = academicService.calculateSubjectCourseAverage(1, 2024, "I");
+            assertNotNull(courseAvg);
+            assertTrue(courseAvg.compareTo(BigDecimal.ZERO) >= 0);
 
-            Map<Integer, Long> absences = academicService.getAbsenceCountPerStudent(2024);
-            assertNotNull(absences);
+            Map<Integer, Long> excessiveAbsences = academicService.getStudentsWithExcessiveAbsences(1);
+            assertNotNull(excessiveAbsences);
         } catch (Exception e) {
             org.junit.jupiter.api.Assumptions.assumeTrue(false, "Live database test skipped if offline: " + e.getMessage());
         }
