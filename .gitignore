@@ -1,0 +1,19 @@
+target/
+!.mvn/wrapper/maven-wrapper.jar
+!.**/src/main/**/target/
+!.**/src/test/**/target/
+.kotlin
+
+### IntelliJ IDEA ###
+.idea/
+*.iws
+*.iml
+*.ipr
+
+### Logs and Outputs ###
+error_log.txt
+invoices/*.pdf
+!invoices/.gitkeep
+
+### Mac OS ###
+.DS_Store
