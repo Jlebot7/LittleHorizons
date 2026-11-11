@@ -32,7 +32,7 @@ public class FullSystemIntegrationTest {
             payment.setAmountPaid(new BigDecimal("450000.00"));
             payment.setAcademicYear(2024);
             payment.setAcademicPeriod("I");
-            payment.setPaymentMethod("Transferencia Bancaria");
+            payment.setPaymentMethod("Transferencia");
             payment.setReceiptNumber("TEST-REC-" + System.currentTimeMillis());
             payment.setNotes("Pago de pensión escolar automatizado");
             payment.setPaymentDate(LocalDate.now());
