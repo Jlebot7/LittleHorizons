@@ -4,6 +4,7 @@
 ![MySQL](https://img.shields.io/badge/MySQL-8.0%20%7C%208.4%2B-4479A1?style=for-the-badge&logo=mysql&logoColor=white)
 ![Maven](https://img.shields.io/badge/Maven-3.9%2B-C71A36?style=for-the-badge&logo=apache-maven&logoColor=white)
 ![Architecture](https://img.shields.io/badge/Architecture-MVC%20%2B%20DAO-blue?style=for-the-badge)
+![Security Audit](https://img.shields.io/badge/Audit-Passed%20100%25-brightgreen?style=for-the-badge)
 
 Sistema de Planificación de Recursos Empresariales (ERP) desarrollado para el **Colegio Internacional "Little Horizons"**, diseñado bajo altos estándares de ingeniería de software, arquitectura limpia Modelo-Vista-Controlador (MVC), patrón DAO (Data Access Object), Principios SOLID, prevención estricta de Inyección SQL y generación de facturación electrónica DIAN con CUFE y código QR.
 
@@ -30,9 +31,9 @@ El Colegio Internacional "Little Horizons" atiende a más de 500 estudiantes des
 ---
 
 ## 3. Autores
-* **Desarrollador Principal:** Ingeniero de Software / Java Backend Developer
+* **Desarrollador Principal:** Juan Camilo Leal ([@Jlebot7](https://github.com/Jlebot7))
 * **Institución:** Colegio Internacional Little Horizons S.A.S.
-* **Contacto Técnico:** `desarrollo@littlehorizons.edu.co` | `soporte.erp@littlehorizons.edu.co`
+* **Contacto Técnico:** `juancamiloleal07@gmail.com` | `desarrollo@littlehorizons.edu.co`
 
 ---
 
@@ -47,7 +48,7 @@ El Colegio Internacional "Little Horizons" atiende a más de 500 estudiantes des
   * `com.github.librepdf:openpdf:2.0.3`: Generación de documentos PDF de facturación DIAN.
   * `com.google.zxing:core:3.5.3` y `javase:3.5.3`: Motor de codificación y renderizado gráfico de códigos QR.
   * `org.slf4j:slf4j-simple:2.0.13`: Logging estándar para pool de conexiones.
-  * `org.junit.jupiter:junit-jupiter:5.10.2`: Pruebas unitarias automatizadas.
+  * `org.junit.jupiter:junit-jupiter:5.10.2`: Pruebas unitarias y de integración automatizadas.
 
 ---
 
@@ -97,8 +98,8 @@ El driver oficial `mysql-connector-j` versión 8.4.0 se encuentra integrado y ge
 
 ### 7.1 Clonar el Repositorio
 ```bash
-git clone https://github.com/usuario/com.littlehorizons.erp.git
-cd com.littlehorizons.erp
+git clone https://github.com/Jlebot7/LittleHorizons.git
+cd LittleHorizons
 ```
 
 ### 7.2 Abrir en el IDE
@@ -106,16 +107,26 @@ cd com.littlehorizons.erp
 2. Seleccione **File -> Open...** y elija la carpeta del proyecto.
 3. El IDE detectará el archivo `pom.xml` y descargará las dependencias.
 
-### 7.3 Compilar y Ejecutar Pruebas
+### 7.3 Compilar y Ejecutar Pruebas Automatizadas
 ```bash
 mvn clean test
 ```
 
 ### 7.4 Ejecutar la Aplicación
+
+**Opción A — Ejecutable Standalone (Fat JAR generado con Maven Shade):**
+```bash
+mvn clean package
+java -jar target/LittleHorizons-1.0-SNAPSHOT.jar
+```
+
+**Opción B — Mediante Maven Exec Plugin:**
 ```bash
 mvn compile exec:java -Dexec.mainClass="com.littlehorizons.erp.Main"
 ```
-O directamente desde IntelliJ ejecutando la clase [com.littlehorizons.erp.Main](src/main/java/com/littlehorizons/erp/Main.java).
+
+**Opción C — Desde el IDE:**
+Ejecutar la clase principal `com.littlehorizons.erp.Main`.
 
 ---
 
@@ -139,69 +150,65 @@ src/
 │   │   │   ├── extracurricular/
 │   │   │   ├── finance/
 │   │   │   └── resource/
-│   │   ├── service/        // Lógica de negocio, cálculos con Stream API y facturación PDF
-│   │   ├── util/           // Logging (error_log.txt), CUFE DIAN, validaciones seguras
-│   │   ├── view/           // Interfaz de consola profesional y formateadores ASCII
-│   │   └── Main.java       // Punto de entrada de la aplicación
+│   │   ├── service/        // Lógica de negocio (Streams, PDF DIAN, validaciones)
+│   │   ├── util/           // CUFE, Logger centralizado, validador estricto, lector de consola
+│   │   ├── view/           // Vistas de consola e interfaz de usuario
+│   │   └── Main.java       // Clase punto de entrada
 │   └── resources/
-│       └── database.properties
-├── test/java/com/littlehorizons/erp/ // Pruebas unitarias de integridad
-docs/
-└── database.sql            // DDL completo y DML con más de 30 registros por tabla
-invoices/                   // Carpeta donde se generan las facturas PDF electrónicas
-error_log.txt               // Registro persistente de errores y auditoría del sistema
+│       └── database.properties // Parámetros del pool HikariCP y MySQL
+└── test/
+    └── java/com/littlehorizons/erp/
+        ├── CufeGeneratorTest.java          // Validación SHA-256 DIAN
+        ├── DatabaseConnectivityTest.java   // Verificación pool y persistencia MySQL en vivo
+        ├── FullSystemIntegrationTest.java  // Flujo E2E pago -> factura PDF -> MySQL
+        ├── InvoicePdfGenerationTest.java   // Generación física de PDF y QR
+        ├── SecurityIntegrityAuditTest.java // Auditoría de código limpio, PreparedStatement y límites
+        ├── StreamCalculationTest.java      // Promedios y agrupaciones con Stream API
+        └── ValidationUtilTest.java         // Validación estricta de fechas, notas y regex
 ```
 
 ---
 
-## 9. Principios y Patrones de Diseño Aplicados
+## 9. Módulos y Funcionalidades Principales
 
-### 9.1 Principios SOLID
-1. **Single Responsibility Principle (SRP):** Cada clase tiene una única responsabilidad bien acotada. `StudentDAO` únicamente gestiona persistencia SQL de estudiantes; `AcademicService` procesa cálculos académicos; `InvoicePdfService` genera exclusivamente facturas PDF.
-2. **Open/Closed Principle (OCP):** El sistema permite incorporar nuevos métodos de pago, formatos de exportación o categorías de recursos extendiendo los servicios sin modificar el núcleo de datos.
-3. **Liskov Substitution Principle (LSP):** Las entidades y DAOs respetan contratos coherentes sin alterar el comportamiento de las jerarquías.
-4. **Interface Segregation Principle (ISP):** Clases y métodos desacoplados que exponen únicamente las operaciones requeridas por cada capa.
-5. **Dependency Inversion Principle (DIP):** Los controladores dependen de servicios de alto nivel y la conexión a base de datos se centraliza en `DatabaseConfig`.
+### 9.1 Gestión Académica
+* Registro completo de estudiantes, acudientes y docentes.
+* Matrículas por grado y asociación acudiente-estudiante (parentesco, contacto de emergencia).
+* Calificaciones con escala oficial colombiana `0.0` a `5.0`.
+* Cálculo de promedios ponderados y ranking de estudiantes destacados mediante **Java Stream API** (`mapToDouble`, `average`).
+* Control diario de asistencia y detección funcional de estudiantes con ausencias críticas acumuladas.
 
-### 9.2 Patrones de Diseño Implementados
-* **Data Access Object (DAO):** Desacopla la lógica de negocio de las sentencias SQL JDBC. Cada consulta utiliza `PreparedStatement` para prevenir inyección SQL.
-* **Singleton Pattern:** Implementado en `DatabaseConfig` para compartir un único pool de conexiones HikariCP administrado y thread-safe.
-* **Factory / Builder:** Aplicado en la construcción de documentos PDF en `InvoicePdfService` y generación de códigos QR con ZXing.
+### 9.2 Facturación Electrónica DIAN y Gestión Financiera
+* Registro transaccional de pagos por conceptos (Matrícula, Pensión, Biblioteca, Talleres, etc.).
+* Generación instantánea de **Factura Electrónica en PDF** con diseño institucional.
+* Algoritmo de cálculo de **CUFE** (Código Único de Facturación Electrónica) con hashing seguro **SHA-256** en hexadecimal de 64 caracteres.
+* Código de barras bidimensional **QR** incrustado en el PDF codificando la información tributaria exigida por la DIAN.
+* Identificación funcional de estudiantes en mora de pago mediante Streams.
 
----
+### 9.3 Actividades Extracurriculares
+* Gestión de clubes con cupos máximos y validación para evitar sobrecupos.
+* Control de membresías activas, suspendidas y finalizadas.
+* Organización de eventos intercolegiales y seguimiento de resultados (posiciones obtenidas).
 
-## 10. Funcionalidades Principales por Módulo
-
-1. **Gestión de Estudiantes y Matrículas:** Registro de estudiantes, vinculación de acudientes múltiples (hermanos) y matrícula en grados académicos (Preescolar a Once).
-2. **Gestión Académica:**
-   * Registro de notas en escala colombiana `0.0 - 5.0` por materia y período (`I`, `II`, `III`, `IV`, `Final`).
-   * **Cálculo automático de promedios con Stream API:** Promedio ponderado por período y promedio general de grupo.
-   * Registro diario de asistencia (`Presente`, `Ausente`, `Tardanza`, `Excusa Médica`).
-   * Alertas tempranas de estudiantes con 3 o más inasistencias.
-3. **Gestión de Profesores:** Directorio docente y asignación de carga académica por materia, sección y año lectivo.
-4. **Actividades Extracurriculares:**
-   * Catálogo de 30 clubes con validación de aforo máximo (`capacidad_maxima`).
-   * Calendario de eventos escolares y registro de participantes con roles y posiciones obtenidas (1er Lugar, 2do Lugar, etc.).
-5. **Gestión Financiera y Facturación Electrónica DIAN:**
-   * Catálogo de conceptos de pago con opción de descuentos o becas personalizadas.
-   * Registro de pagos y recibos de caja únicos.
-   * **Generación automática de Factura Electrónica en PDF:** Información institucional de Little Horizons S.A.S., NIT `900.543.210-9`, desglose de conceptos, CUFE calculado con SHA-256 y código QR embebido.
-   * Reporte de cartera morosa (estudiantes con pensiones pendientes mediante Stream API).
-6. **Gestión de Recursos (Biblioteca y Laboratorios):**
-   * Inventario categorizado de libros, microscopios, cronómetros y tablets.
-   * Préstamos diferenciados para estudiantes (`prestamos_estudiante`) y docentes (`prestamos_profesor`).
-   * Transición automática de estados (`Disponible` ↔ `Prestado`).
-   * Alerta de préstamos vencidos no devueltos a la fecha.
-7. **Reportes y Estadísticas:** Tablero ejecutivo con indicadores clave (KPIs) en tiempo real.
+### 9.4 Préstamos de Recursos Escolares
+* Catálogo de inventario para biblioteca y laboratorios con seguimiento de ejemplares disponibles.
+* Registro de préstamos y devoluciones para estudiantes y profesores.
+* Alertas preventivas para préstamos vencidos no devueltos.
 
 ---
 
-## 11. Manejo de Errores y Logs
+## 10. Cumplimiento de Buenas Prácticas y Seguridad
+* **Inyección SQL Imposible:** 100% de consultas SQL construidas con `PreparedStatement` y paso de parámetros por posición (`?`).
+* **Higiene de Recursos:** Cierre determinista de conexiones JDBC, statements y streams mediante `try-with-resources`.
+* **Código Limpio:** Código fuente 100% libre de comentarios residuales en clases de producción, con nomenclatura autodocumentada en inglés.
+* **Auditoría Formal:** Informe de auditoría técnica disponible en [docs/SECURITY_AUDIT.md](docs/SECURITY_AUDIT.md).
 
-* **Sistema de Logging:** Implementado en `LoggerUtil`, sincronizado y thread-safe.
-* **Ubicación del Archivo de Logs:** Se almacena en la raíz del proyecto como `error_log.txt`.
-* **Estrategia de Excepciones:** Todas las operaciones de base de datos capturan `SQLException` de manera controlada, registrando la traza completa con timestamp en `error_log.txt` sin exponer información sensible al usuario final.
-* **Manejo de Recursos:** Bloques `try-with-resources` en todas las aperturas de `Connection`, `PreparedStatement`, `ResultSet` y streams de archivos PDF para evitar fugas de memoria o descriptores.
+---
+
+## 11. Manejo de Errores y Logging
+* **Sistema de Logging:** Sincronizado y seguro ante concurrencia en `LoggerUtil`.
+* **Ubicación:** `error_log.txt` en la raíz del proyecto.
+* **Seguridad de Información:** Mensajes limpios y amigables hacia la consola, canalizando stacktraces técnicos únicamente al archivo de log interno.
 
 ---
 
@@ -229,25 +236,24 @@ Seleccione una opción: _
 ---
 
 ## 13. Problemas Conocidos y Limitaciones
-* La aplicación está optimizada como aplicación de consola profesional estándar Java.
-* La firma digital y el CUFE de la factura electrónica son simulaciones algorítmicas criptográficas basadas en el estándar de la DIAN para propósitos académicos y de demostración funcional.
+* La aplicación está diseñada como una aplicación de consola estándar Java para alta portabilidad y rendimiento.
+* La firma digital y el CUFE de la factura electrónica son simulaciones algorítmicas criptográficas basadas en el estándar técnico de la DIAN para propósitos de demostración funcional y evaluación.
 
 ---
 
 ## 14. Futuras Mejoras
-* Interfaz gráfica web moderna mediante Spring Boot y React.
-* Módulo de envío automático de facturas PDF por correo electrónico vía SMTP.
-* Pasarela de pagos en línea integrada (Wompi / PSE / PayU).
+* Interfaz gráfica web moderna con Spring Boot y frontend React.
+* Envío automatizado de facturas electrónicas PDF por correo electrónico vía SMTP.
+* Integración con pasarelas de pago colombianas en línea (Wompi / PSE / PayU).
 
 ---
 
 ## 15. Licencia
-Este proyecto fue desarrollado con fines educativos bajo la licencia MIT.
+Este proyecto fue desarrollado bajo la Licencia MIT.
 
 ---
 
 ## 16. Contacto
 * **Colegio Internacional Little Horizons S.A.S.**  
-* **Dirección:** Calle 127 # 45-12, Bogotá D.C., Colombia  
-* **Línea de Atención:** +57 (601) 745-8900  
-* **Correo:** `info@littlehorizons.edu.co`
+* **Desarrollador:** Juan Camilo Leal ([@Jlebot7](https://github.com/Jlebot7))  
+* **Correo:** `juancamiloleal07@gmail.com`
