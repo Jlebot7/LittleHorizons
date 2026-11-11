@@ -828,16 +828,16 @@ INSERT INTO registros_academicos (id_registro, id_estudiante, id_materia, id_pro
 (33, 34, 25, 25, 2024, 'I', 4.1, 'Evaluación de competencias primer periodo', '2024-03-25'),
 (34, 35, 13, 13, 2024, 'I', 4.9, 'Evaluación de competencias primer periodo', '2024-03-25'),
 (35, 1, 25, 25, 2024, 'I', 3.8, 'Evaluación de competencias primer periodo', '2024-03-25'),
-(36, 2, 19, 19, 2024, 'I', 4.1, 'Evaluación de competencias primer periodo', '2024-03-25'),
-(37, 3, 28, 28, 2024, 'I', 4.7, 'Evaluación de competencias primer periodo', '2024-03-25'),
-(38, 4, 22, 22, 2024, 'I', 4.2, 'Evaluación de competencias primer periodo', '2024-03-25'),
-(39, 5, 31, 31, 2024, 'I', 4.7, 'Evaluación de competencias primer periodo', '2024-03-25'),
-(40, 6, 16, 16, 2024, 'I', 4.2, 'Evaluación de competencias primer periodo', '2024-03-25'),
-(41, 7, 34, 2, 2024, 'I', 4.4, 'Evaluación de competencias primer periodo', '2024-03-25'),
-(42, 8, 13, 13, 2024, 'I', 3.1, 'Evaluación de competencias primer periodo', '2024-03-25'),
-(43, 9, 28, 28, 2024, 'I', 3.5, 'Evaluación de competencias primer periodo', '2024-03-25'),
-(44, 10, 25, 25, 2024, 'I', 3.6, 'Evaluación de competencias primer periodo', '2024-03-25'),
-(45, 11, 10, 10, 2024, 'I', 3.2, 'Evaluación de competencias primer periodo', '2024-03-25');
+(36, 2, 19, 19, 2024, 'II', 4.1, 'Evaluación de competencias segundo periodo', '2024-06-15'),
+(37, 3, 28, 28, 2024, 'II', 4.7, 'Evaluación de competencias segundo periodo', '2024-06-15'),
+(38, 4, 22, 22, 2024, 'II', 4.2, 'Evaluación de competencias segundo periodo', '2024-06-15'),
+(39, 5, 31, 31, 2024, 'II', 4.7, 'Evaluación de competencias segundo periodo', '2024-06-15'),
+(40, 6, 16, 16, 2024, 'II', 4.2, 'Evaluación de competencias segundo periodo', '2024-06-15'),
+(41, 7, 34, 2, 2024, 'II', 4.4, 'Evaluación de competencias segundo periodo', '2024-06-15'),
+(42, 8, 13, 13, 2024, 'II', 3.1, 'Evaluación de competencias segundo periodo', '2024-06-15'),
+(43, 9, 28, 28, 2024, 'II', 3.5, 'Evaluación de competencias segundo periodo', '2024-06-15'),
+(44, 10, 25, 25, 2024, 'II', 3.6, 'Evaluación de competencias segundo periodo', '2024-06-15'),
+(45, 11, 10, 10, 2024, 'II', 3.2, 'Evaluación de competencias segundo periodo', '2024-06-15');
 
 -- 13. Tabla de Asistencias
 INSERT INTO asistencias (id_asistencia, id_estudiante, id_materia, fecha_asistencia, estado_asistencia, observaciones, registrado_por) VALUES
