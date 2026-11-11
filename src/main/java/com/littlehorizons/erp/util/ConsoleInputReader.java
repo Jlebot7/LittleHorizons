@@ -3,6 +3,7 @@ package com.littlehorizons.erp.util;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Scanner;
+
 public final class ConsoleInputReader {
 
     private static final Scanner SCANNER = new Scanner(System.in);
@@ -10,11 +11,21 @@ public final class ConsoleInputReader {
     private ConsoleInputReader() {
     }
 
+    private static String nextLineOrNull() {
+        if (!SCANNER.hasNextLine()) {
+            return null;
+        }
+        return SCANNER.nextLine();
+    }
+
     public static String readString(String prompt) {
         while (true) {
             System.out.print(prompt);
-            String input = SCANNER.nextLine();
-            if (input != null && !input.trim().isEmpty()) {
+            String input = nextLineOrNull();
+            if (input == null) {
+                return "";
+            }
+            if (!input.trim().isEmpty()) {
                 return input.trim();
             }
             System.out.println("  [!] Error: El campo no puede estar vacío. Intente de nuevo.");
@@ -23,14 +34,20 @@ public final class ConsoleInputReader {
 
     public static String readOptionalString(String prompt) {
         System.out.print(prompt);
-        String input = SCANNER.nextLine();
-        return (input != null && !input.trim().isEmpty()) ? input.trim() : "";
+        String input = nextLineOrNull();
+        if (input == null) {
+            return "";
+        }
+        return input.trim();
     }
 
     public static int readInt(String prompt, int min, int max) {
         while (true) {
             System.out.print(prompt);
-            String line = SCANNER.nextLine();
+            String line = nextLineOrNull();
+            if (line == null) {
+                return max;
+            }
             try {
                 int value = Integer.parseInt(line.trim());
                 if (value >= min && value <= max) {
@@ -46,7 +63,11 @@ public final class ConsoleInputReader {
     public static BigDecimal readBigDecimal(String prompt, BigDecimal min, BigDecimal max) {
         while (true) {
             System.out.print(prompt);
-            String line = SCANNER.nextLine().replace(',', '.').trim();
+            String line = nextLineOrNull();
+            if (line == null) {
+                return min;
+            }
+            line = line.replace(',', '.').trim();
             try {
                 BigDecimal value = new BigDecimal(line);
                 if (value.compareTo(min) >= 0 && value.compareTo(max) <= 0) {
@@ -62,7 +83,11 @@ public final class ConsoleInputReader {
     public static LocalDate readDate(String prompt) {
         while (true) {
             System.out.print(prompt + " (YYYY-MM-DD): ");
-            String line = SCANNER.nextLine().trim();
+            String line = nextLineOrNull();
+            if (line == null) {
+                return LocalDate.now();
+            }
+            line = line.trim();
             if (ValidationUtil.isValidDate(line)) {
                 return ValidationUtil.parseDate(line);
             }
@@ -73,7 +98,11 @@ public final class ConsoleInputReader {
     public static boolean readBoolean(String prompt) {
         while (true) {
             System.out.print(prompt + " (S/N): ");
-            String line = SCANNER.nextLine().trim().toUpperCase();
+            String line = nextLineOrNull();
+            if (line == null) {
+                return false;
+            }
+            line = line.trim().toUpperCase();
             if (line.equals("S") || line.equals("SI") || line.equals("Y") || line.equals("YES")) {
                 return true;
             }
@@ -86,6 +115,6 @@ public final class ConsoleInputReader {
 
     public static void waitForEnter() {
         System.out.print("\nPresione [ENTER] para continuar...");
-        SCANNER.nextLine();
+        nextLineOrNull();
     }
 }
