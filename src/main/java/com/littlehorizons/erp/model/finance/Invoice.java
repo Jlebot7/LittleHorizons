@@ -1,5 +1,6 @@
 package com.littlehorizons.erp.model.finance;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 public class Invoice {
@@ -12,10 +13,23 @@ public class Invoice {
     private String pdfFileName;
     private String filePath;
 
+    // Nuevos formatos de visualización y exportación
+    private String txtFileName;
+    private String txtFilePath;
+    private String xmlFileName;
+    private String xmlFilePath;
+
+    // Campos tributarios bajo el marco del Estatuto Tributario
+    private BigDecimal subtotalAmount;
+    private BigDecimal taxAmount;
+    private BigDecimal taxRate;
+    private Boolean isTaxExempt;
+    private String taxLegalReference;
+
     private String studentName;
     private String guardianName;
     private String conceptName;
-    private java.math.BigDecimal amount;
+    private BigDecimal amount;
 
     public Invoice() {
     }
@@ -29,6 +43,20 @@ public class Invoice {
         this.cufe = cufe;
         this.pdfFileName = pdfFileName;
         this.filePath = filePath;
+        initFilePaths();
+    }
+
+    private void initFilePaths() {
+        if (invoiceNumber != null) {
+            if (this.txtFileName == null) {
+                this.txtFileName = String.format("factura_%s.txt", invoiceNumber);
+                this.txtFilePath = "invoices/" + this.txtFileName;
+            }
+            if (this.xmlFileName == null) {
+                this.xmlFileName = String.format("factura_%s.xml", invoiceNumber);
+                this.xmlFilePath = "invoices/" + this.xmlFileName;
+            }
+        }
     }
 
     public Integer getIdInvoice() {
@@ -45,6 +73,7 @@ public class Invoice {
 
     public void setInvoiceNumber(String invoiceNumber) {
         this.invoiceNumber = invoiceNumber;
+        initFilePaths();
     }
 
     public Integer getIdPayment() {
@@ -87,6 +116,90 @@ public class Invoice {
         this.filePath = filePath;
     }
 
+    public String getTxtFileName() {
+        if (txtFileName == null && invoiceNumber != null) {
+            txtFileName = String.format("factura_%s.txt", invoiceNumber);
+        }
+        return txtFileName;
+    }
+
+    public void setTxtFileName(String txtFileName) {
+        this.txtFileName = txtFileName;
+    }
+
+    public String getTxtFilePath() {
+        if (txtFilePath == null && getTxtFileName() != null) {
+            txtFilePath = "invoices/" + getTxtFileName();
+        }
+        return txtFilePath;
+    }
+
+    public void setTxtFilePath(String txtFilePath) {
+        this.txtFilePath = txtFilePath;
+    }
+
+    public String getXmlFileName() {
+        if (xmlFileName == null && invoiceNumber != null) {
+            xmlFileName = String.format("factura_%s.xml", invoiceNumber);
+        }
+        return xmlFileName;
+    }
+
+    public void setXmlFileName(String xmlFileName) {
+        this.xmlFileName = xmlFileName;
+    }
+
+    public String getXmlFilePath() {
+        if (xmlFilePath == null && getXmlFileName() != null) {
+            xmlFilePath = "invoices/" + getXmlFileName();
+        }
+        return xmlFilePath;
+    }
+
+    public void setXmlFilePath(String xmlFilePath) {
+        this.xmlFilePath = xmlFilePath;
+    }
+
+    public BigDecimal getSubtotalAmount() {
+        return subtotalAmount;
+    }
+
+    public void setSubtotalAmount(BigDecimal subtotalAmount) {
+        this.subtotalAmount = subtotalAmount;
+    }
+
+    public BigDecimal getTaxAmount() {
+        return taxAmount;
+    }
+
+    public void setTaxAmount(BigDecimal taxAmount) {
+        this.taxAmount = taxAmount;
+    }
+
+    public BigDecimal getTaxRate() {
+        return taxRate;
+    }
+
+    public void setTaxRate(BigDecimal taxRate) {
+        this.taxRate = taxRate;
+    }
+
+    public Boolean getIsTaxExempt() {
+        return isTaxExempt;
+    }
+
+    public void setIsTaxExempt(Boolean taxExempt) {
+        isTaxExempt = taxExempt;
+    }
+
+    public String getTaxLegalReference() {
+        return taxLegalReference;
+    }
+
+    public void setTaxLegalReference(String taxLegalReference) {
+        this.taxLegalReference = taxLegalReference;
+    }
+
     public String getStudentName() {
         return studentName;
     }
@@ -111,17 +224,17 @@ public class Invoice {
         this.conceptName = conceptName;
     }
 
-    public java.math.BigDecimal getAmount() {
+    public BigDecimal getAmount() {
         return amount;
     }
 
-    public void setAmount(java.math.BigDecimal amount) {
+    public void setAmount(BigDecimal amount) {
         this.amount = amount;
     }
 
     @Override
     public String toString() {
-        return String.format("[%d] Factura: %s | Fecha: %s | PDF: %s",
-                idInvoice, invoiceNumber, issueDate, pdfFileName);
+        return String.format("[%d] Factura: %s | Fecha: %s | PDF: %s | TXT: %s | XML: %s",
+                idInvoice, invoiceNumber, issueDate, pdfFileName, getTxtFileName(), getXmlFileName());
     }
 }
