@@ -41,6 +41,165 @@ public final class ConsoleInputReader {
         return input.trim();
     }
 
+    public static String readPersonName(String prompt) {
+        while (true) {
+            System.out.print(prompt);
+            String input = nextLineOrNull();
+            if (input == null) {
+                return "";
+            }
+            String trimmed = input.trim();
+            if (ValidationUtil.isValidPersonName(trimmed)) {
+                return trimmed;
+            }
+            System.out.println("  [!] Error: El nombre no puede contener números ni caracteres especiales (solo letras, espacios, guiones y tildes).");
+        }
+    }
+
+    public static String readOptionalPersonName(String prompt) {
+        while (true) {
+            System.out.print(prompt);
+            String input = nextLineOrNull();
+            if (input == null) {
+                return "";
+            }
+            String trimmed = input.trim();
+            if (trimmed.isEmpty()) {
+                return "";
+            }
+            if (ValidationUtil.isValidPersonName(trimmed)) {
+                return trimmed;
+            }
+            System.out.println("  [!] Error: Si ingresa un nombre/apellido, este no puede contener números ni caracteres inválidos.");
+        }
+    }
+
+    public static String readStudentDocumentType(String prompt) {
+        while (true) {
+            System.out.print(prompt);
+            String input = nextLineOrNull();
+            if (input == null) {
+                return "TI";
+            }
+            String trimmed = input.trim().toUpperCase();
+            if (ValidationUtil.isValidDocumentType(trimmed, true)) {
+                return trimmed;
+            }
+            System.out.println("  [!] Error: Tipo de documento no válido para estudiante. Opciones admitidas: RC, TI, CC, CE, Pasaporte, PPT, PEP, NES, VISA.");
+        }
+    }
+
+    public static String readAdultDocumentType(String prompt) {
+        while (true) {
+            System.out.print(prompt);
+            String input = nextLineOrNull();
+            if (input == null) {
+                return "CC";
+            }
+            String trimmed = input.trim().toUpperCase();
+            if (ValidationUtil.isValidDocumentType(trimmed, false)) {
+                return trimmed;
+            }
+            System.out.println("  [!] Error: Tipo de documento no válido. Opciones admitidas: CC, CE, Pasaporte, PPT, PEP, VISA.");
+        }
+    }
+
+    public static String readDocumentNumber(String prompt, String docType) {
+        while (true) {
+            System.out.print(prompt);
+            String input = nextLineOrNull();
+            if (input == null) {
+                return "";
+            }
+            String trimmed = input.trim();
+            if (ValidationUtil.isValidDocumentNumber(docType, trimmed)) {
+                return trimmed;
+            }
+            String type = docType != null ? docType.trim().toUpperCase() : "";
+            if (type.equals("CC") || type.equals("TI") || type.equals("RC")) {
+                System.out.println("  [!] Error: Para " + type + " el número de documento debe contener exclusivamente de 7 a 10 dígitos numéricos (sin letras).");
+            } else {
+                System.out.println("  [!] Error: Formato de documento inválido (debe contener entre 5 y 20 caracteres alfanuméricos).");
+            }
+        }
+    }
+
+    public static String readPhone(String prompt, boolean optional) {
+        while (true) {
+            System.out.print(prompt);
+            String input = nextLineOrNull();
+            if (input == null) {
+                return "";
+            }
+            String trimmed = input.trim();
+            if (trimmed.isEmpty()) {
+                if (optional) {
+                    return "";
+                }
+                System.out.println("  [!] Error: El teléfono es obligatorio.");
+                continue;
+            }
+            if (ValidationUtil.isValidPhone(trimmed)) {
+                return trimmed;
+            }
+            System.out.println("  [!] Error: Teléfono inválido. No debe contener letras y debe tener al menos 7 dígitos numéricos.");
+        }
+    }
+
+    public static String readEmail(String prompt, boolean optional) {
+        while (true) {
+            System.out.print(prompt);
+            String input = nextLineOrNull();
+            if (input == null) {
+                return "";
+            }
+            String trimmed = input.trim();
+            if (trimmed.isEmpty()) {
+                if (optional) {
+                    return "";
+                }
+                System.out.println("  [!] Error: El correo electrónico es obligatorio.");
+                continue;
+            }
+            if (ValidationUtil.isValidEmail(trimmed)) {
+                return trimmed;
+            }
+            System.out.println("  [!] Error: Formato de correo electrónico inválido (ejemplo: usuario@dominio.com).");
+        }
+    }
+
+    public static String readBloodType(String prompt, boolean optional) {
+        while (true) {
+            System.out.print(prompt);
+            String input = nextLineOrNull();
+            if (input == null) {
+                return "";
+            }
+            String trimmed = input.trim().toUpperCase();
+            if (trimmed.isEmpty()) {
+                if (optional) {
+                    return "";
+                }
+                System.out.println("  [!] Error: El tipo de sangre es obligatorio.");
+                continue;
+            }
+            if (ValidationUtil.isValidBloodType(trimmed)) {
+                return trimmed;
+            }
+            System.out.println("  [!] Error: Tipo de sangre no reconocido. Valores válidos: O+, O-, A+, A-, B+, B-, AB+, AB-.");
+        }
+    }
+
+    public static LocalDate readStudentBirthDate(String prompt) {
+        while (true) {
+            LocalDate date = readDate(prompt);
+            if (ValidationUtil.isValidStudentBirthDate(date)) {
+                return date;
+            }
+            System.out.println("  [!] Error: La fecha de nacimiento debe estar en el pasado y corresponder a un estudiante entre 3 y 25 años.");
+        }
+    }
+
     public static int readInt(String prompt, int min, int max) {
         while (true) {
             System.out.print(prompt);
