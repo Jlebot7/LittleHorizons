@@ -24,38 +24,41 @@ public class FinanceController {
     public void run() {
         boolean back = false;
         while (!back) {
-            ConsoleHelper.printHeader("GESTIÓN FINANCIERA Y FACTURACIÓN ELECTRÓNICA", "Colegio Little Horizons - Cumplimiento DIAN");
-            System.out.println("1. Registrar pago y emitir Factura Electrónica PDF (DIAN / CUFE / QR)");
-            System.out.println("2. Consultar catálogo de conceptos de cobro");
+            ConsoleHelper.printHeader("GESTIÓN FINANCIERA Y FACTURACIÓN ELECTRÓNICA", "Cumplimiento Estatuto Tributario y Estándar MUISCA DIAN");
+            System.out.println("1. Registrar pago y emitir Factura Electrónica (PDF, TXT, XML - E.T. / DIAN)");
+            System.out.println("2. Consultar catálogo de conceptos de cobro (Marco Fiscal E.T.)");
             System.out.println("3. Consultar historial de pagos por estudiante");
             System.out.println("4. Consultar historial de pagos por acudiente");
-            System.out.println("5. Listar facturas electrónicas generadas");
-            System.out.println("6. Reporte de estudiantes morosos (Pensión pendiente)");
+            System.out.println("5. Listar facturas electrónicas generadas (Desglose Tributario)");
+            System.out.println("6. Visualizar factura en texto plano (Legible para Agentes / Consola)");
+            System.out.println("7. Reporte de estudiantes morosos (Pensión pendiente)");
             System.out.println("0. Regresar al Menú Principal");
             System.out.println();
 
-            int option = ConsoleInputReader.readInt("Seleccione una opción: ", 0, 6);
+            int option = ConsoleInputReader.readInt("Seleccione una opción: ", 0, 7);
             switch (option) {
                 case 1 -> processPaymentAndInvoice();
                 case 2 -> listConcepts();
                 case 3 -> viewStudentPaymentHistory();
                 case 4 -> viewGuardianPaymentHistory();
                 case 5 -> listInvoices();
-                case 6 -> showDefaultersReport();
+                case 6 -> viewInvoicePlainText();
+                case 7 -> showDefaultersReport();
                 case 0 -> back = true;
             }
         }
     }
 
     private void processPaymentAndInvoice() {
-        ConsoleHelper.printSubHeader("REGISTRO DE PAGO Y FACTURA ELECTRÓNICA DIAN");
+        ConsoleHelper.printSubHeader("REGISTRO DE PAGO Y FACTURA ELECTRÓNICA DIAN (PDF / TXT / XML)");
         int studentId = ConsoleInputReader.readInt("ID del estudiante: ", 1, 99999);
         int guardianId = ConsoleInputReader.readInt("ID del acudiente responsable del pago: ", 1, 99999);
 
         System.out.println("\nConceptos de pago disponibles:");
         List<PaymentConcept> concepts = financeService.getAllConcepts();
         for (PaymentConcept c : concepts) {
-            System.out.printf("  [%d] %-25s - Base: COP $%,.2f%n", c.getIdConcept(), c.getConceptName(), c.getBaseAmount());
+            System.out.printf("  [%d] %-25s - Base: COP $%,.2f | %s%n",
+                    c.getIdConcept(), c.getConceptName(), c.getBaseAmount(), c.getTaxClassification());
         }
 
         int conceptId = ConsoleInputReader.readInt("Seleccione el ID del concepto: ", 1, concepts.size());
@@ -90,16 +93,21 @@ public class FinanceController {
             Optional<Invoice> invoiceOpt = financeService.processPaymentAndInvoice(payment);
             if (invoiceOpt.isPresent()) {
                 Invoice inv = invoiceOpt.get();
-                ConsoleHelper.printSuccess("¡PAGO CONFIRMADO Y FACTURA ELECTRÓNICA GENERADA CON ÉXITO!");
+                ConsoleHelper.printSuccess("¡PAGO CONFIRMADO Y FACTURA MULTI-FORMATO GENERADA CON ÉXITO!");
                 System.out.println();
-                System.out.println("  ═════════════════════════════════════════════════════════════");
-                System.out.printf("  Consecutivo Factura : %s%n", inv.getInvoiceNumber());
-                System.out.printf("  Fecha de Emisión    : %s%n", inv.getIssueDate());
-                System.out.printf("  Monto Pagado        : COP $%,.2f%n", amountPaid);
-                System.out.printf("  CUFE (DIAN Simulado): %s%n", inv.getCufe());
-                System.out.printf("  Archivo PDF Creado  : %s%n", inv.getFilePath());
-                System.out.println("  ═════════════════════════════════════════════════════════════");
-                System.out.println("  Nota: El PDF generado incluye la firma digital simulada y código QR.");
+                System.out.println("  ═════════════════════════════════════════════════════════════════════════");
+                System.out.printf("  Consecutivo Factura   : %s%n", inv.getInvoiceNumber());
+                System.out.printf("  Fecha de Emisión      : %s%n", inv.getIssueDate());
+                System.out.printf("  Base Imponible        : COP $%,.2f%n", inv.getSubtotalAmount() != null ? inv.getSubtotalAmount() : amountPaid);
+                System.out.printf("  IVA Liquidado         : COP $%,.2f%n", inv.getTaxAmount() != null ? inv.getTaxAmount() : BigDecimal.ZERO);
+                System.out.printf("  Total Facturado       : COP $%,.2f%n", amountPaid);
+                System.out.printf("  Marco Tributario E.T. : %s%n", inv.getTaxLegalReference() != null ? inv.getTaxLegalReference() : "Excluido Art. 476 E.T.");
+                System.out.printf("  CUFE (DIAN SHA-256)   : %s%n", inv.getCufe());
+                System.out.println("  -------------------------------------------------------------------------");
+                System.out.printf("  [1] Archivo PDF       : %s%n", inv.getFilePath());
+                System.out.printf("  [2] Archivo TXT Plano : %s (Ideal para lectura directa de agentes)%n", inv.getTxtFilePath());
+                System.out.printf("  [3] Archivo XML MUISCA: %s (UBL 2.1 estándar DIAN)%n", inv.getXmlFilePath());
+                System.out.println("  ═════════════════════════════════════════════════════════════════════════");
             } else {
                 ConsoleHelper.printError("No se pudo procesar el pago o generar la factura.");
             }
@@ -110,16 +118,19 @@ public class FinanceController {
     }
 
     private void listConcepts() {
-        ConsoleHelper.printSubHeader("CATÁLOGO DE CONCEPTOS DE PAGO");
+        ConsoleHelper.printSubHeader("CATÁLOGO DE CONCEPTOS DE PAGO Y TRATAMIENTO TRIBUTARIO");
         List<PaymentConcept> concepts = financeService.getAllConcepts();
-        System.out.printf("%-4s | %-12s | %-30s | %-18s | %-10s%n", "ID", "CÓDIGO", "NOMBRE DEL CONCEPTO", "VALOR BASE", "RECURRENTE");
-        System.out.println("─".repeat(85));
+        System.out.printf("%-4s | %-10s | %-28s | %-16s | %-10s | %-32s%n",
+                "ID", "CÓDIGO", "NOMBRE DEL CONCEPTO", "VALOR BASE", "TARIFA IVA", "MARCO ESTATUTO TRIBUTARIO");
+        System.out.println("─".repeat(115));
         for (PaymentConcept c : concepts) {
-            System.out.printf("%-4d | %-12s | %-30s | COP $%,12.2f | %-10s%n",
+            String ivaStr = Boolean.TRUE.equals(c.getIsTaxExempt()) ? "0% (Excluido)" : "19% (Gravado)";
+            String marcoStr = Boolean.TRUE.equals(c.getIsTaxExempt()) ? "Art. 476 Num. 6 E.T. (Educación)" : "Art. 468 E.T. (General)";
+            System.out.printf("%-4d | %-10s | %-28s | COP $%10.2f | %-10s | %-32s%n",
                     c.getIdConcept(), c.getConceptCode(), c.getConceptName(), c.getBaseAmount(),
-                    c.getIsRecurring() ? "Sí (Mensual)" : "No (Único)");
+                    ivaStr, marcoStr);
         }
-        System.out.println("─".repeat(85));
+        System.out.println("─".repeat(115));
         ConsoleInputReader.waitForEnter();
     }
 
@@ -164,23 +175,93 @@ public class FinanceController {
     }
 
     private void listInvoices() {
-        ConsoleHelper.printSubHeader("REGISTRO DE FACTURAS ELECTRÓNICAS EMITIDAS");
+        ConsoleHelper.printSubHeader("REGISTRO DE FACTURAS ELECTRÓNICAS EMITIDAS (MULTI-FORMATO)");
         List<Invoice> invoices = financeService.getAllInvoices();
         if (invoices.isEmpty()) {
             ConsoleHelper.printWarning("No se han emitido facturas electrónicas.");
         } else {
-            System.out.printf("%-4s | %-16s | %-11s | %-25s | %-16s | %-20s%n", "ID", "Nº FACTURA", "FECHA", "ACUDIENTE", "VALOR TOTAL", "ARCHIVO PDF");
-            System.out.println("─".repeat(105));
+            System.out.printf("%-4s | %-16s | %-11s | %-22s | %-15s | %-12s | %-15s | %-18s%n",
+                    "ID", "Nº FACTURA", "FECHA", "ACUDIENTE", "BASE IMPONIBLE", "IVA LIQUIDADO", "TOTAL COP", "FORMATOS");
+            System.out.println("─".repeat(125));
             for (Invoice inv : invoices) {
-                System.out.printf("%-4d | %-16s | %-11s | %-25s | COP $%,10.2f | %-20s%n",
+                BigDecimal base = inv.getSubtotalAmount() != null ? inv.getSubtotalAmount() : inv.getAmount();
+                BigDecimal tax = inv.getTaxAmount() != null ? inv.getTaxAmount() : BigDecimal.ZERO;
+                BigDecimal total = inv.getAmount() != null ? inv.getAmount() : BigDecimal.ZERO;
+
+                System.out.printf("%-4d | %-16s | %-11s | %-22s | COP $%9.2f | COP $%7.2f | COP $%9.2f | PDF / TXT / XML%n",
                         inv.getIdInvoice(), inv.getInvoiceNumber(), inv.getIssueDate(),
                         inv.getGuardianName() != null ? inv.getGuardianName() : "N/A",
-                        inv.getAmount() != null ? inv.getAmount() : BigDecimal.ZERO,
-                        inv.getPdfFileName());
+                        base, tax, total);
             }
-            System.out.println("─".repeat(105));
+            System.out.println("─".repeat(125));
             System.out.println("Total facturas electrónicas registradas: " + invoices.size());
+            System.out.println("Nota: Para inspeccionar el contenido completo use la Opción 6 del menú.");
         }
+        ConsoleInputReader.waitForEnter();
+    }
+
+    private void viewInvoicePlainText() {
+        ConsoleHelper.printSubHeader("VISUALIZACIÓN DE FACTURA EN TEXTO PLANO / XML (LEGIBLE PARA AGENTES)");
+        System.out.println("Puede ingresar el número de factura (ej: FE-LH-2024-0001) o el ID numérico de la factura.");
+        String input = ConsoleInputReader.readString("Ingrese el número o ID de factura (o '?' para listar las últimas): ").trim();
+
+        if (input.equals("?")) {
+            List<Invoice> list = financeService.getAllInvoices();
+            int limit = Math.min(list.size(), 10);
+            System.out.println("\nÚltimas facturas registradas:");
+            for (int i = 0; i < limit; i++) {
+                Invoice in = list.get(i);
+                System.out.printf("  [%d] Consecutivo: %s | Acudiente: %s | Total: COP $%,.2f%n",
+                        in.getIdInvoice(), in.getInvoiceNumber(), in.getGuardianName(), in.getAmount());
+            }
+            input = ConsoleInputReader.readString("\nIngrese el número o ID de factura a consultar: ").trim();
+        }
+
+        Optional<Invoice> invOpt = Optional.empty();
+        try {
+            int id = Integer.parseInt(input);
+            invOpt = financeService.getInvoiceById(id);
+        } catch (NumberFormatException e) {
+            invOpt = financeService.getInvoiceByNumber(input);
+        }
+
+        if (invOpt.isEmpty()) {
+            ConsoleHelper.printError("No se encontró ninguna factura con el criterio: " + input);
+            ConsoleInputReader.waitForEnter();
+            return;
+        }
+
+        Invoice invoice = invOpt.get();
+        System.out.println("\nFormatos disponibles para " + invoice.getInvoiceNumber() + ":");
+        System.out.println("1. Visualizar Formato TXT Estructurado (Estatuto Tributario Art. 617 / Consola / Agentes)");
+        System.out.println("2. Visualizar Formato XML UBL 2.1 Estándar MUISCA / DIAN");
+        System.out.println("3. Ver ambos formatos");
+        int fOpt = ConsoleInputReader.readInt("Seleccione opción (1-3): ", 1, 3);
+
+        if (fOpt == 1 || fOpt == 3) {
+            System.out.println("\n" + "=".repeat(88));
+            System.out.println("               VISUALIZACIÓN EN TEXTO PLANO (TXT) - INVOICE AGENT VIEW");
+            System.out.println("=".repeat(88));
+            Optional<String> txtOpt = financeService.getInvoiceTxtContent(invoice);
+            if (txtOpt.isPresent()) {
+                System.out.println(txtOpt.get());
+            } else {
+                ConsoleHelper.printError("No se pudo cargar el archivo TXT de la factura.");
+            }
+        }
+
+        if (fOpt == 2 || fOpt == 3) {
+            System.out.println("\n" + "=".repeat(88));
+            System.out.println("               VISUALIZACIÓN EN XML UBL 2.1 (MUISCA / DIAN) - INVOICE XML VIEW");
+            System.out.println("=".repeat(88));
+            Optional<String> xmlOpt = financeService.getInvoiceXmlContent(invoice);
+            if (xmlOpt.isPresent()) {
+                System.out.println(xmlOpt.get());
+            } else {
+                ConsoleHelper.printError("No se pudo cargar el archivo XML de la factura.");
+            }
+        }
+
         ConsoleInputReader.waitForEnter();
     }
 
