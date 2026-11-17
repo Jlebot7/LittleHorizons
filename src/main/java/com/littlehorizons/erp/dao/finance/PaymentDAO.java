@@ -5,13 +5,12 @@ import com.littlehorizons.erp.model.finance.Invoice;
 import com.littlehorizons.erp.model.finance.Payment;
 import com.littlehorizons.erp.model.finance.PaymentConcept;
 import com.littlehorizons.erp.util.LoggerUtil;
+import com.littlehorizons.erp.util.TaxCalculator;
+import com.littlehorizons.erp.util.TaxCalculator.TaxBreakdown;
 
-import java.math.BigDecimal;
 import java.sql.*;
-import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.sql.Date;
+import java.util.*;
 
 public class PaymentDAO {
 
@@ -24,21 +23,13 @@ public class PaymentDAO {
              PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
             ps.setInt(1, payment.getIdStudent());
-            if (payment.getIdGuardian() != null) {
-                ps.setInt(2, payment.getIdGuardian());
-            } else {
-                ps.setNull(2, Types.INTEGER);
-            }
+            ps.setInt(2, payment.getIdGuardian());
             ps.setInt(3, payment.getIdConcept());
             ps.setBigDecimal(4, payment.getAmountPaid());
             ps.setDate(5, Date.valueOf(payment.getPaymentDate()));
             ps.setString(6, payment.getPaymentMethod());
             ps.setString(7, payment.getReceiptNumber());
-            if (payment.getAcademicYear() != null) {
-                ps.setInt(8, payment.getAcademicYear());
-            } else {
-                ps.setNull(8, Types.INTEGER);
-            }
+            ps.setInt(8, payment.getAcademicYear());
             ps.setString(9, payment.getAcademicPeriod());
             ps.setString(10, payment.getNotes());
 
@@ -158,12 +149,13 @@ public class PaymentDAO {
     public List<PaymentConcept> findAllConcepts() {
         List<PaymentConcept> list = new ArrayList<>();
         String sql = "SELECT * FROM conceptos_pago ORDER BY id_concepto";
+
         try (Connection conn = DatabaseConfig.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
 
             while (rs.next()) {
-                list.add(new PaymentConcept(
+                PaymentConcept c = new PaymentConcept(
                         rs.getInt("id_concepto"),
                         rs.getString("codigo_concepto"),
                         rs.getString("nombre_concepto"),
@@ -171,7 +163,9 @@ public class PaymentDAO {
                         rs.getBigDecimal("monto_base"),
                         rs.getBoolean("es_recurrente"),
                         rs.getBoolean("esta_activo")
-                ));
+                );
+                c.evaluateTaxStatus();
+                list.add(c);
             }
         } catch (SQLException e) {
             LoggerUtil.error("Error fetching payment concepts", e);
@@ -181,13 +175,14 @@ public class PaymentDAO {
 
     public Optional<PaymentConcept> findConceptById(int id) {
         String sql = "SELECT * FROM conceptos_pago WHERE id_concepto = ?";
+
         try (Connection conn = DatabaseConfig.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setInt(1, id);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
-                    return Optional.of(new PaymentConcept(
+                    PaymentConcept c = new PaymentConcept(
                             rs.getInt("id_concepto"),
                             rs.getString("codigo_concepto"),
                             rs.getString("nombre_concepto"),
@@ -195,7 +190,9 @@ public class PaymentDAO {
                             rs.getBigDecimal("monto_base"),
                             rs.getBoolean("es_recurrente"),
                             rs.getBoolean("esta_activo")
-                    ));
+                    );
+                    c.evaluateTaxStatus();
+                    return Optional.of(c);
                 }
             }
         } catch (SQLException e) {
@@ -249,25 +246,88 @@ public class PaymentDAO {
              ResultSet rs = ps.executeQuery()) {
 
             while (rs.next()) {
-                Invoice inv = new Invoice();
-                inv.setIdInvoice(rs.getInt("id_factura"));
-                inv.setInvoiceNumber(rs.getString("numero_factura"));
-                inv.setIdPayment(rs.getInt("id_pago"));
-                Date d = rs.getDate("fecha_emision");
-                if (d != null) inv.setIssueDate(d.toLocalDate());
-                inv.setCufe(rs.getString("cufe"));
-                inv.setPdfFileName(rs.getString("nombre_archivo_pdf"));
-                inv.setFilePath(rs.getString("ruta_archivo"));
-                inv.setAmount(rs.getBigDecimal("monto_pagado"));
-                inv.setStudentName(rs.getString("nom_estudiante"));
-                inv.setGuardianName(rs.getString("nom_acudiente"));
-                inv.setConceptName(rs.getString("nombre_concepto"));
-                list.add(inv);
+                list.add(mapResultSetToInvoice(rs));
             }
         } catch (SQLException e) {
             LoggerUtil.error("Error fetching all invoices", e);
         }
         return list;
+    }
+
+    public Optional<Invoice> findInvoiceByNumber(String invoiceNumber) {
+        String sql = "SELECT f.*, p.monto_pagado, CONCAT(e.primer_nombre, ' ', e.primer_apellido) AS nom_estudiante, " +
+                "CONCAT(a.primer_nombre, ' ', a.primer_apellido) AS nom_acudiente, c.nombre_concepto " +
+                "FROM facturas f " +
+                "JOIN pagos p ON f.id_pago = p.id_pago " +
+                "JOIN estudiantes e ON p.id_estudiante = e.id_estudiante " +
+                "LEFT JOIN acudientes a ON p.id_acudiente = a.id_acudiente " +
+                "JOIN conceptos_pago c ON p.id_concepto = c.id_concepto " +
+                "WHERE f.numero_factura = ?";
+
+        try (Connection conn = DatabaseConfig.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, invoiceNumber);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return Optional.of(mapResultSetToInvoice(rs));
+                }
+            }
+        } catch (SQLException e) {
+            LoggerUtil.error("Error finding invoice by number: " + invoiceNumber, e);
+        }
+        return Optional.empty();
+    }
+
+    public Optional<Invoice> findInvoiceById(int idInvoice) {
+        String sql = "SELECT f.*, p.monto_pagado, CONCAT(e.primer_nombre, ' ', e.primer_apellido) AS nom_estudiante, " +
+                "CONCAT(a.primer_nombre, ' ', a.primer_apellido) AS nom_acudiente, c.nombre_concepto " +
+                "FROM facturas f " +
+                "JOIN pagos p ON f.id_pago = p.id_pago " +
+                "JOIN estudiantes e ON p.id_estudiante = e.id_estudiante " +
+                "LEFT JOIN acudientes a ON p.id_acudiente = a.id_acudiente " +
+                "JOIN conceptos_pago c ON p.id_concepto = c.id_concepto " +
+                "WHERE f.id_factura = ?";
+
+        try (Connection conn = DatabaseConfig.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, idInvoice);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return Optional.of(mapResultSetToInvoice(rs));
+                }
+            }
+        } catch (SQLException e) {
+            LoggerUtil.error("Error finding invoice by id: " + idInvoice, e);
+        }
+        return Optional.empty();
+    }
+
+    private Invoice mapResultSetToInvoice(ResultSet rs) throws SQLException {
+        Invoice inv = new Invoice();
+        inv.setIdInvoice(rs.getInt("id_factura"));
+        inv.setInvoiceNumber(rs.getString("numero_factura"));
+        inv.setIdPayment(rs.getInt("id_pago"));
+        Date d = rs.getDate("fecha_emision");
+        if (d != null) inv.setIssueDate(d.toLocalDate());
+        inv.setCufe(rs.getString("cufe"));
+        inv.setPdfFileName(rs.getString("nombre_archivo_pdf"));
+        inv.setFilePath(rs.getString("ruta_archivo"));
+        inv.setAmount(rs.getBigDecimal("monto_pagado"));
+        inv.setStudentName(rs.getString("nom_estudiante"));
+        inv.setGuardianName(rs.getString("nom_acudiente"));
+        inv.setConceptName(rs.getString("nombre_concepto"));
+
+        // Calcular desglose tributario bajo Estatuto Tributario
+        TaxBreakdown tax = TaxCalculator.calculateTax(inv.getAmount(), inv.getConceptName());
+        inv.setSubtotalAmount(tax.getBaseAmount());
+        inv.setTaxAmount(tax.getTaxAmount());
+        inv.setTaxRate(tax.getTaxRate());
+        inv.setIsTaxExempt(tax.isExempt());
+        inv.setTaxLegalReference(tax.getLegalReference());
+
+        return inv;
     }
 
     public int getNextInvoiceSequence() {
