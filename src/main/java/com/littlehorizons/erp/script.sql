@@ -1,4 +1,4 @@
--- Anexo: Script de Base de Datos
+﻿-- Anexo: Script de Base de Datos
 
 -- A continuación se presenta el script completo DDL de MySQL para crear todas las tablas necesarias. 
 -- Este script debe ejecutarse en una base de datos llamada `little_horizons_erp`.
@@ -31,7 +31,7 @@ CREATE TABLE grados (
 -- Tabla de estudiantes
 CREATE TABLE estudiantes (
     id_estudiante INT AUTO_INCREMENT PRIMARY KEY,
-    tipo_documento ENUM('TI', 'CC', 'CE', 'Pasaporte') NOT NULL DEFAULT 'TI',
+    tipo_documento ENUM('RC', 'TI', 'CC', 'CE', 'Pasaporte', 'PPT', 'PEP', 'NES', 'VISA') NOT NULL DEFAULT 'TI',
     numero_documento VARCHAR(20) NOT NULL UNIQUE,
     primer_nombre VARCHAR(100) NOT NULL,
     segundo_nombre VARCHAR(100),
@@ -49,6 +49,8 @@ CREATE TABLE estudiantes (
     estado ENUM('Activo', 'Graduado', 'Retirado', 'Suspendido') DEFAULT 'Activo',
     fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT chk_estudiante_tipo_sangre CHECK (tipo_sangre IS NULL OR tipo_sangre IN ('O+', 'O-', 'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-')),
+    CONSTRAINT chk_estudiante_fecha_nac CHECK (fecha_nacimiento <= CURRENT_DATE),
     INDEX idx_documento (tipo_documento, numero_documento),
     INDEX idx_estado (estado),
     INDEX idx_nombre (primer_apellido, segundo_apellido, primer_nombre)
@@ -57,7 +59,7 @@ CREATE TABLE estudiantes (
 -- Tabla de acudientes/tutores legales
 CREATE TABLE acudientes (
     id_acudiente INT AUTO_INCREMENT PRIMARY KEY,
-    tipo_documento ENUM('CC', 'CE', 'Pasaporte') NOT NULL DEFAULT 'CC',
+    tipo_documento ENUM('CC', 'CE', 'Pasaporte', 'PPT', 'PEP', 'VISA') NOT NULL DEFAULT 'CC',
     numero_documento VARCHAR(20) NOT NULL UNIQUE,
     primer_nombre VARCHAR(100) NOT NULL,
     segundo_nombre VARCHAR(100),
@@ -72,6 +74,8 @@ CREATE TABLE acudientes (
     es_responsable_financiero BOOLEAN DEFAULT TRUE COMMENT 'Indica si es responsable de pagos',
     fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT chk_estudiante_tipo_sangre CHECK (tipo_sangre IS NULL OR tipo_sangre IN ('O+', 'O-', 'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-')),
+    CONSTRAINT chk_estudiante_fecha_nac CHECK (fecha_nacimiento <= CURRENT_DATE),
     INDEX idx_documento (tipo_documento, numero_documento),
     INDEX idx_nombre (primer_apellido, segundo_apellido)
 ) ENGINE=InnoDB COMMENT='Acudientes y tutores legales';
@@ -131,7 +135,7 @@ CREATE TABLE materias (
 -- Tabla de profesores
 CREATE TABLE profesores (
     id_profesor INT AUTO_INCREMENT PRIMARY KEY,
-    tipo_documento ENUM('CC', 'CE', 'Pasaporte') NOT NULL DEFAULT 'CC',
+    tipo_documento ENUM('CC', 'CE', 'Pasaporte', 'PPT', 'PEP', 'VISA') NOT NULL DEFAULT 'CC',
     numero_documento VARCHAR(20) NOT NULL UNIQUE,
     primer_nombre VARCHAR(100) NOT NULL,
     segundo_nombre VARCHAR(100),
@@ -144,6 +148,8 @@ CREATE TABLE profesores (
     estado ENUM('Activo', 'Inactivo', 'Licencia') DEFAULT 'Activo',
     fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT chk_estudiante_tipo_sangre CHECK (tipo_sangre IS NULL OR tipo_sangre IN ('O+', 'O-', 'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-')),
+    CONSTRAINT chk_estudiante_fecha_nac CHECK (fecha_nacimiento <= CURRENT_DATE),
     INDEX idx_documento (tipo_documento, numero_documento),
     INDEX idx_estado (estado),
     INDEX idx_nombre (primer_apellido, segundo_apellido)
@@ -195,6 +201,8 @@ CREATE TABLE registros_academicos (
     fecha_registro DATE NOT NULL,
     fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT chk_estudiante_tipo_sangre CHECK (tipo_sangre IS NULL OR tipo_sangre IN ('O+', 'O-', 'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-')),
+    CONSTRAINT chk_estudiante_fecha_nac CHECK (fecha_nacimiento <= CURRENT_DATE),
     FOREIGN KEY (id_estudiante) REFERENCES estudiantes(id_estudiante) ON DELETE CASCADE,
     FOREIGN KEY (id_materia) REFERENCES materias(id_materia) ON DELETE CASCADE,
     FOREIGN KEY (id_profesor) REFERENCES profesores(id_profesor),
@@ -239,6 +247,8 @@ CREATE TABLE clubes (
     esta_activo BOOLEAN DEFAULT TRUE,
     fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT chk_estudiante_tipo_sangre CHECK (tipo_sangre IS NULL OR tipo_sangre IN ('O+', 'O-', 'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-')),
+    CONSTRAINT chk_estudiante_fecha_nac CHECK (fecha_nacimiento <= CURRENT_DATE),
     FOREIGN KEY (id_profesor_supervisor) REFERENCES profesores(id_profesor),
     INDEX idx_activo (esta_activo),
     INDEX idx_nombre (nombre_club)
@@ -309,6 +319,8 @@ CREATE TABLE conceptos_pago (
     esta_activo BOOLEAN DEFAULT TRUE,
     fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT chk_estudiante_tipo_sangre CHECK (tipo_sangre IS NULL OR tipo_sangre IN ('O+', 'O-', 'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-')),
+    CONSTRAINT chk_estudiante_fecha_nac CHECK (fecha_nacimiento <= CURRENT_DATE),
     INDEX idx_activo (esta_activo),
     INDEX idx_codigo (codigo_concepto)
 ) ENGINE=InnoDB COMMENT='Catálogo de conceptos de pago del colegio';
@@ -376,6 +388,8 @@ CREATE TABLE recursos (
     estado_recurso ENUM('Disponible', 'Prestado', 'En Mantenimiento', 'Dado de Baja') DEFAULT 'Disponible',
     fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT chk_estudiante_tipo_sangre CHECK (tipo_sangre IS NULL OR tipo_sangre IN ('O+', 'O-', 'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-')),
+    CONSTRAINT chk_estudiante_fecha_nac CHECK (fecha_nacimiento <= CURRENT_DATE),
     FOREIGN KEY (id_categoria) REFERENCES categorias_recurso(id_categoria),
     INDEX idx_codigo (codigo_recurso),
     INDEX idx_estado (estado_recurso),
@@ -395,6 +409,8 @@ CREATE TABLE prestamos_estudiante (
     observaciones TEXT,
     fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT chk_estudiante_tipo_sangre CHECK (tipo_sangre IS NULL OR tipo_sangre IN ('O+', 'O-', 'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-')),
+    CONSTRAINT chk_estudiante_fecha_nac CHECK (fecha_nacimiento <= CURRENT_DATE),
     FOREIGN KEY (id_recurso) REFERENCES recursos(id_recurso) ON DELETE CASCADE,
     FOREIGN KEY (id_estudiante) REFERENCES estudiantes(id_estudiante) ON DELETE CASCADE,
     INDEX idx_recurso_estado (id_recurso, estado_prestamo),
@@ -415,6 +431,8 @@ CREATE TABLE prestamos_profesor (
     observaciones TEXT,
     fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT chk_estudiante_tipo_sangre CHECK (tipo_sangre IS NULL OR tipo_sangre IN ('O+', 'O-', 'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-')),
+    CONSTRAINT chk_estudiante_fecha_nac CHECK (fecha_nacimiento <= CURRENT_DATE),
     FOREIGN KEY (id_recurso) REFERENCES recursos(id_recurso) ON DELETE CASCADE,
     FOREIGN KEY (id_profesor) REFERENCES profesores(id_profesor) ON DELETE CASCADE,
     INDEX idx_recurso_estado (id_recurso, estado_prestamo),

@@ -19,10 +19,10 @@ public class TeacherController {
     public void run() {
         boolean back = false;
         while (!back) {
-            ConsoleHelper.printHeader("GESTIÓN DE PROFESORES Y CARGA ACADÉMICA", "Colegio Little Horizons");
+            ConsoleHelper.printHeader("GESTIÓN DE PROFESORES Y ASIGNACIONES", "Colegio Little Horizons");
             System.out.println("1. Registrar nuevo profesor");
-            System.out.println("2. Directorio completo de profesores");
-            System.out.println("3. Asignar materia a profesor (Carga académica)");
+            System.out.println("2. Listar todos los profesores");
+            System.out.println("3. Asignar materia a profesor");
             System.out.println("0. Regresar al Menú Principal");
             System.out.println();
 
@@ -38,25 +38,29 @@ public class TeacherController {
 
     private void registerTeacher() {
         ConsoleHelper.printSubHeader("REGISTRO DE PROFESOR");
-        String docType = ConsoleInputReader.readString("Tipo de documento (CC/CE/Pasaporte): ").toUpperCase();
-        String docNum = ConsoleInputReader.readString("Número de documento: ");
-        String fName = ConsoleInputReader.readString("Primer nombre: ");
-        String sName = ConsoleInputReader.readOptionalString("Segundo nombre: ");
-        String lName = ConsoleInputReader.readString("Primer apellido: ");
-        String sLName = ConsoleInputReader.readOptionalString("Segundo apellido: ");
-        String email = ConsoleInputReader.readString("Correo electrónico institucional: ");
-        String phone = ConsoleInputReader.readString("Teléfono de contacto: ");
-        String spec = ConsoleInputReader.readString("Área de especialización docente: ");
+        String docType = ConsoleInputReader.readAdultDocumentType("Tipo de documento (CC/CE/Pasaporte/PPT/PEP/VISA): ");
+        String docNum = ConsoleInputReader.readDocumentNumber("Número de documento: ", docType);
+        String fName = ConsoleInputReader.readPersonName("Primer nombre: ");
+        String sName = ConsoleInputReader.readOptionalPersonName("Segundo nombre: ");
+        String lName = ConsoleInputReader.readPersonName("Primer apellido: ");
+        String sLName = ConsoleInputReader.readOptionalPersonName("Segundo apellido: ");
+        String email = ConsoleInputReader.readEmail("Correo electrónico institucional: ", false);
+        String phone = ConsoleInputReader.readPhone("Teléfono de contacto: ", false);
+        String spec = ConsoleInputReader.readPersonName("Área de especialización docente: ");
         LocalDate hireDate = ConsoleInputReader.readDate("Fecha de contratación");
 
         Teacher t = new Teacher(null, docType, docNum, fName, sName, lName, sLName,
                 email, phone, spec, hireDate, "Activo");
 
-        Integer id = academicService.registerTeacher(t);
-        if (id != null) {
-            ConsoleHelper.printSuccess("Profesor registrado exitosamente con ID: " + id);
-        } else {
-            ConsoleHelper.printError("Error al registrar el profesor.");
+        try {
+            Integer id = academicService.registerTeacher(t);
+            if (id != null) {
+                ConsoleHelper.printSuccess("Profesor registrado exitosamente con ID: " + id);
+            } else {
+                ConsoleHelper.printError("Error al registrar el profesor.");
+            }
+        } catch (Exception e) {
+            ConsoleHelper.printError("Error al registrar el profesor: " + e.getMessage());
         }
         ConsoleInputReader.waitForEnter();
     }

@@ -10,6 +10,7 @@ import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
+
 public class AcademicService {
 
     private final StudentDAO studentDAO;
@@ -28,16 +29,112 @@ public class AcademicService {
         this.attendanceDAO = new AttendanceDAO();
     }
 
-    public Integer registerStudent(Student student) {
-        if (!ValidationUtil.isNotEmpty(student.getFirstName()) ||
-                !ValidationUtil.isNotEmpty(student.getFirstLastName()) ||
-                !ValidationUtil.isValidDocumentNumber(student.getDocumentNumber())) {
-            throw new IllegalArgumentException("Nombre y número de documento son obligatorios y deben ser válidos.");
+    private void validateStudent(Student student) {
+        if (student == null) {
+            throw new IllegalArgumentException("Los datos del estudiante no pueden ser nulos.");
         }
+        if (!ValidationUtil.isValidPersonName(student.getFirstName())) {
+            throw new IllegalArgumentException("El primer nombre del estudiante es obligatorio y no puede contener números.");
+        }
+        if (!ValidationUtil.isValidPersonName(student.getFirstLastName())) {
+            throw new IllegalArgumentException("El primer apellido del estudiante es obligatorio y no puede contener números.");
+        }
+        if (ValidationUtil.isNotEmpty(student.getSecondName()) && !ValidationUtil.isValidPersonName(student.getSecondName())) {
+            throw new IllegalArgumentException("El segundo nombre del estudiante no puede contener números ni caracteres inválidos.");
+        }
+        if (ValidationUtil.isNotEmpty(student.getSecondLastName()) && !ValidationUtil.isValidPersonName(student.getSecondLastName())) {
+            throw new IllegalArgumentException("El segundo apellido del estudiante no puede contener números ni caracteres inválidos.");
+        }
+        if (!ValidationUtil.isValidDocumentType(student.getDocumentType(), true)) {
+            throw new IllegalArgumentException("Tipo de documento no válido para estudiante. Tipos admitidos: " + ValidationUtil.getStudentDocumentTypes());
+        }
+        if (!ValidationUtil.isValidDocumentNumber(student.getDocumentType(), student.getDocumentNumber())) {
+            throw new IllegalArgumentException("El número de documento no es válido para el tipo: " + student.getDocumentType());
+        }
+        if (student.getBirthDate() != null && !ValidationUtil.isValidStudentBirthDate(student.getBirthDate())) {
+            throw new IllegalArgumentException("La fecha de nacimiento debe corresponder a un estudiante entre 3 y 25 años.");
+        }
+        if (ValidationUtil.isNotEmpty(student.getEmail()) && !ValidationUtil.isValidEmail(student.getEmail())) {
+            throw new IllegalArgumentException("El correo electrónico del estudiante no tiene un formato válido.");
+        }
+        if (ValidationUtil.isNotEmpty(student.getPhone()) && !ValidationUtil.isValidPhone(student.getPhone())) {
+            throw new IllegalArgumentException("El teléfono del estudiante no tiene un formato numérico válido.");
+        }
+        if (ValidationUtil.isNotEmpty(student.getBloodType()) && !ValidationUtil.isValidBloodType(student.getBloodType())) {
+            throw new IllegalArgumentException("El tipo de sangre no es válido (ej: O+, O-, A+, B+, AB+).");
+        }
+    }
+
+    private void validateGuardian(Guardian guardian) {
+        if (guardian == null) {
+            throw new IllegalArgumentException("Los datos del acudiente no pueden ser nulos.");
+        }
+        if (!ValidationUtil.isValidPersonName(guardian.getFirstName())) {
+            throw new IllegalArgumentException("El primer nombre del acudiente es obligatorio y no puede contener números.");
+        }
+        if (!ValidationUtil.isValidPersonName(guardian.getFirstLastName())) {
+            throw new IllegalArgumentException("El primer apellido del acudiente es obligatorio y no puede contener números.");
+        }
+        if (ValidationUtil.isNotEmpty(guardian.getSecondName()) && !ValidationUtil.isValidPersonName(guardian.getSecondName())) {
+            throw new IllegalArgumentException("El segundo nombre del acudiente no puede contener números ni caracteres inválidos.");
+        }
+        if (ValidationUtil.isNotEmpty(guardian.getSecondLastName()) && !ValidationUtil.isValidPersonName(guardian.getSecondLastName())) {
+            throw new IllegalArgumentException("El segundo apellido del acudiente no puede contener números ni caracteres inválidos.");
+        }
+        if (!ValidationUtil.isValidDocumentType(guardian.getDocumentType(), false)) {
+            throw new IllegalArgumentException("Tipo de documento no válido para acudiente. Tipos admitidos: " + ValidationUtil.getAdultDocumentTypes());
+        }
+        if (!ValidationUtil.isValidDocumentNumber(guardian.getDocumentType(), guardian.getDocumentNumber())) {
+            throw new IllegalArgumentException("El número de documento no es válido para el tipo: " + guardian.getDocumentType());
+        }
+        if (!ValidationUtil.isValidPhone(guardian.getMainPhone())) {
+            throw new IllegalArgumentException("El teléfono principal del acudiente es obligatorio y debe ser numérico.");
+        }
+        if (ValidationUtil.isNotEmpty(guardian.getSecondaryPhone()) && !ValidationUtil.isValidPhone(guardian.getSecondaryPhone())) {
+            throw new IllegalArgumentException("El teléfono secundario del acudiente debe ser numérico.");
+        }
+        if (ValidationUtil.isNotEmpty(guardian.getEmail()) && !ValidationUtil.isValidEmail(guardian.getEmail())) {
+            throw new IllegalArgumentException("El correo electrónico del acudiente no tiene un formato válido.");
+        }
+    }
+
+    private void validateTeacher(Teacher teacher) {
+        if (teacher == null) {
+            throw new IllegalArgumentException("Los datos del profesor no pueden ser nulos.");
+        }
+        if (!ValidationUtil.isValidPersonName(teacher.getFirstName())) {
+            throw new IllegalArgumentException("El primer nombre del profesor es obligatorio y no puede contener números.");
+        }
+        if (!ValidationUtil.isValidPersonName(teacher.getFirstLastName())) {
+            throw new IllegalArgumentException("El primer apellido del profesor es obligatorio y no puede contener números.");
+        }
+        if (ValidationUtil.isNotEmpty(teacher.getSecondName()) && !ValidationUtil.isValidPersonName(teacher.getSecondName())) {
+            throw new IllegalArgumentException("El segundo nombre del profesor no puede contener números ni caracteres inválidos.");
+        }
+        if (ValidationUtil.isNotEmpty(teacher.getSecondLastName()) && !ValidationUtil.isValidPersonName(teacher.getSecondLastName())) {
+            throw new IllegalArgumentException("El segundo apellido del profesor no puede contener números ni caracteres inválidos.");
+        }
+        if (!ValidationUtil.isValidDocumentType(teacher.getDocumentType(), false)) {
+            throw new IllegalArgumentException("Tipo de documento no válido para profesor. Tipos admitidos: " + ValidationUtil.getAdultDocumentTypes());
+        }
+        if (!ValidationUtil.isValidDocumentNumber(teacher.getDocumentType(), teacher.getDocumentNumber())) {
+            throw new IllegalArgumentException("El número de documento no es válido para el tipo: " + teacher.getDocumentType());
+        }
+        if (!ValidationUtil.isValidEmail(teacher.getEmail())) {
+            throw new IllegalArgumentException("El correo institucional del profesor es obligatorio y debe tener formato válido.");
+        }
+        if (ValidationUtil.isNotEmpty(teacher.getPhone()) && !ValidationUtil.isValidPhone(teacher.getPhone())) {
+            throw new IllegalArgumentException("El teléfono del profesor debe ser numérico.");
+        }
+    }
+
+    public Integer registerStudent(Student student) {
+        validateStudent(student);
         return studentDAO.save(student);
     }
 
     public boolean updateStudent(Student student) {
+        validateStudent(student);
         return studentDAO.update(student);
     }
 
@@ -54,11 +151,7 @@ public class AcademicService {
     }
 
     public Integer registerGuardian(Guardian guardian) {
-        if (!ValidationUtil.isNotEmpty(guardian.getFirstName()) ||
-                !ValidationUtil.isNotEmpty(guardian.getFirstLastName()) ||
-                !ValidationUtil.isValidDocumentNumber(guardian.getDocumentNumber())) {
-            throw new IllegalArgumentException("Nombre y documento del acudiente son requeridos.");
-        }
+        validateGuardian(guardian);
         return guardianDAO.save(guardian);
     }
 
@@ -75,10 +168,7 @@ public class AcademicService {
     }
 
     public Integer registerTeacher(Teacher teacher) {
-        if (!ValidationUtil.isNotEmpty(teacher.getFirstName()) ||
-                !ValidationUtil.isValidEmail(teacher.getEmail())) {
-            throw new IllegalArgumentException("Nombre y correo válido del profesor son requeridos.");
-        }
+        validateTeacher(teacher);
         return teacherDAO.save(teacher);
     }
 

@@ -46,18 +46,18 @@ public class StudentController {
     private void registerNewStudent() {
         ConsoleHelper.printSubHeader("REGISTRO DE NUEVO ESTUDIANTE");
 
-        String docType = ConsoleInputReader.readString("Tipo de documento (TI/CC/CE/Pasaporte): ").toUpperCase();
-        String docNumber = ConsoleInputReader.readString("Número de documento: ");
-        String firstName = ConsoleInputReader.readString("Primer nombre: ");
-        String secondName = ConsoleInputReader.readOptionalString("Segundo nombre (opcional): ");
-        String firstLastName = ConsoleInputReader.readString("Primer apellido: ");
-        String secondLastName = ConsoleInputReader.readOptionalString("Segundo apellido (opcional): ");
-        LocalDate birthDate = ConsoleInputReader.readDate("Fecha de nacimiento");
+        String docType = ConsoleInputReader.readStudentDocumentType("Tipo de documento (RC/TI/CC/CE/Pasaporte/PPT/PEP/NES/VISA): ");
+        String docNumber = ConsoleInputReader.readDocumentNumber("Número de documento: ", docType);
+        String firstName = ConsoleInputReader.readPersonName("Primer nombre: ");
+        String secondName = ConsoleInputReader.readOptionalPersonName("Segundo nombre (opcional): ");
+        String firstLastName = ConsoleInputReader.readPersonName("Primer apellido: ");
+        String secondLastName = ConsoleInputReader.readOptionalPersonName("Segundo apellido (opcional): ");
+        LocalDate birthDate = ConsoleInputReader.readStudentBirthDate("Fecha de nacimiento");
         String gender = ConsoleInputReader.readString("Género (M/F/Otro): ").toUpperCase();
         String address = ConsoleInputReader.readString("Dirección residencial: ");
-        String phone = ConsoleInputReader.readString("Teléfono de contacto: ");
-        String email = ConsoleInputReader.readString("Correo electrónico: ");
-        String bloodType = ConsoleInputReader.readOptionalString("Tipo de sangre (ej: O+, A+): ");
+        String phone = ConsoleInputReader.readPhone("Teléfono de contacto: ", false);
+        String email = ConsoleInputReader.readEmail("Correo electrónico: ", false);
+        String bloodType = ConsoleInputReader.readBloodType("Tipo de sangre (ej: O+, A+): ", true);
         String allergies = ConsoleInputReader.readOptionalString("Alergias conocidas: ");
         String medicalConditions = ConsoleInputReader.readOptionalString("Condiciones médicas especiales: ");
 
@@ -136,16 +136,16 @@ public class StudentController {
         }
 
         System.out.println("Vinculando acudiente para: " + stOpt.get().getFullName());
-        String docType = ConsoleInputReader.readString("Tipo documento acudiente (CC/CE/Pasaporte): ").toUpperCase();
-        String docNum = ConsoleInputReader.readString("Número de documento: ");
-        String fName = ConsoleInputReader.readString("Primer nombre: ");
-        String sName = ConsoleInputReader.readOptionalString("Segundo nombre: ");
-        String lName = ConsoleInputReader.readString("Primer apellido: ");
-        String sLName = ConsoleInputReader.readOptionalString("Segundo apellido: ");
+        String docType = ConsoleInputReader.readAdultDocumentType("Tipo documento acudiente (CC/CE/Pasaporte/PPT/PEP/VISA): ");
+        String docNum = ConsoleInputReader.readDocumentNumber("Número de documento: ", docType);
+        String fName = ConsoleInputReader.readPersonName("Primer nombre: ");
+        String sName = ConsoleInputReader.readOptionalPersonName("Segundo nombre: ");
+        String lName = ConsoleInputReader.readPersonName("Primer apellido: ");
+        String sLName = ConsoleInputReader.readOptionalPersonName("Segundo apellido: ");
         String rel = ConsoleInputReader.readString("Parentesco (Padre/Madre/Tutor Legal/Abuelo/Tío): ");
-        String mainPhone = ConsoleInputReader.readString("Teléfono principal: ");
-        String secPhone = ConsoleInputReader.readOptionalString("Teléfono secundario: ");
-        String email = ConsoleInputReader.readString("Correo electrónico: ");
+        String mainPhone = ConsoleInputReader.readPhone("Teléfono principal: ", false);
+        String secPhone = ConsoleInputReader.readPhone("Teléfono secundario (opcional): ", true);
+        String email = ConsoleInputReader.readEmail("Correo electrónico: ", false);
         String address = ConsoleInputReader.readString("Dirección: ");
         String occ = ConsoleInputReader.readOptionalString("Ocupación: ");
         boolean finResp = ConsoleInputReader.readBoolean("¿Es responsable financiero de pagos?");
@@ -154,16 +154,20 @@ public class StudentController {
         Guardian g = new Guardian(null, docType, docNum, fName, sName, lName, sLName, rel,
                 mainPhone, secPhone, email, address, occ, finResp);
 
-        Integer gId = academicService.registerGuardian(g);
-        if (gId != null) {
-            boolean linked = academicService.linkStudentToGuardian(studentId, gId, isPrimary, true);
-            if (linked) {
-                ConsoleHelper.printSuccess("Acudiente registrado (ID " + gId + ") y vinculado correctamente al estudiante.");
+        try {
+            Integer gId = academicService.registerGuardian(g);
+            if (gId != null) {
+                boolean linked = academicService.linkStudentToGuardian(studentId, gId, isPrimary, true);
+                if (linked) {
+                    ConsoleHelper.printSuccess("Acudiente registrado (ID " + gId + ") y vinculado correctamente al estudiante.");
+                } else {
+                    ConsoleHelper.printWarning("Acudiente registrado pero ocurrió un error al vincularlo.");
+                }
             } else {
-                ConsoleHelper.printWarning("Acudiente registrado pero ocurrió un error al vincularlo.");
+                ConsoleHelper.printError("No se pudo registrar el acudiente.");
             }
-        } else {
-            ConsoleHelper.printError("No se pudo registrar el acudiente.");
+        } catch (Exception e) {
+            ConsoleHelper.printError("Error al registrar acudiente: " + e.getMessage());
         }
         ConsoleInputReader.waitForEnter();
     }
