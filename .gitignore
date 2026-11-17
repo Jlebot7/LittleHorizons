@@ -14,6 +14,8 @@ dependency-reduced-pom.xml
 ### Logs and Outputs ###
 error_log.txt
 invoices/*.pdf
+invoices/*.txt
+invoices/*.xml
 !invoices/.gitkeep
 
 ### Mac OS ###
