@@ -94,11 +94,6 @@ public class FinanceService {
         return paymentDAO.findInvoiceById(idInvoice);
     }
 
-    /**
-     * Obtiene el contenido de la factura en texto plano estructurado.
-     * Si el archivo físico ya existe en disco, lo lee; de lo contrario,
-     * lo genera en caliente a partir de los datos registrados y lo persiste.
-     */
     public Optional<String> getInvoiceTxtContent(Invoice invoice) {
         if (invoice == null) return Optional.empty();
 
@@ -112,7 +107,6 @@ public class FinanceService {
             }
         }
 
-        // Si no existe el archivo físico (ej. facturas del seed inicial), generarlo en caliente
         try {
             Payment payment = paymentDAO.findPaymentById(invoice.getIdPayment()).orElse(null);
             Student student = null;
@@ -168,9 +162,6 @@ public class FinanceService {
         }
     }
 
-    /**
-     * Obtiene el contenido de la factura en XML estándar UBL 2.1 (MUISCA / DIAN).
-     */
     public Optional<String> getInvoiceXmlContent(Invoice invoice) {
         if (invoice == null) return Optional.empty();
 
@@ -184,7 +175,6 @@ public class FinanceService {
             }
         }
 
-        // Generar en caliente si no existe el archivo físico
         try {
             Payment payment = paymentDAO.findPaymentById(invoice.getIdPayment()).orElse(null);
             Student student = null;
