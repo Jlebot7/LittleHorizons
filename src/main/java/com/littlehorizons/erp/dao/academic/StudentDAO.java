@@ -49,6 +49,15 @@ public class StudentDAO {
             }
         } catch (SQLException e) {
             LoggerUtil.error("Failed to save student: " + student.getDocumentNumber(), e);
+            if (e.getErrorCode() == 1062) {
+                throw new IllegalStateException("El número de documento '" + student.getDocumentNumber() + "' ya se encuentra registrado en el sistema.");
+            } else if (e.getErrorCode() == 1406) {
+                throw new IllegalStateException("Uno de los campos supera la longitud permitida o contiene un valor no admitido: " + e.getMessage());
+            } else if (e.getErrorCode() == 3819) {
+                throw new IllegalStateException("Restricción de validación no cumplida en base de datos: " + e.getMessage());
+            } else {
+                throw new IllegalStateException("Error en base de datos al guardar estudiante: " + e.getMessage());
+            }
         }
         return null;
     }
@@ -82,7 +91,10 @@ public class StudentDAO {
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
             LoggerUtil.error("Failed to update student ID: " + student.getIdStudent(), e);
-            return false;
+            if (e.getErrorCode() == 1062) {
+                throw new IllegalStateException("El número de documento ya está en uso por otro estudiante.");
+            }
+            throw new IllegalStateException("Error al actualizar datos del estudiante: " + e.getMessage());
         }
     }
 
@@ -148,14 +160,14 @@ public class StudentDAO {
             ps.setBoolean(4, isEmergency);
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
-            LoggerUtil.error(String.format("Error associating student %d with guardian %d", studentId, guardianId), e);
-            return false;
+            LoggerUtil.error("Error associating guardian " + guardianId + " to student " + studentId, e);
+            throw new IllegalStateException("Error al asociar el acudiente con el estudiante: " + e.getMessage());
         }
     }
 
     public boolean enrollInGrade(int studentId, int gradeId, int academicYear) {
-        String sql = "INSERT INTO matriculas (id_estudiante, id_grado, año_academico, estado_matricula, fecha_matricula) " +
-                "VALUES (?, ?, ?, 'Activa', CURRENT_DATE) ON DUPLICATE KEY UPDATE id_grado = VALUES(id_grado), estado_matricula = 'Activa'";
+        String sql = "INSERT INTO matriculas (id_estudiante, id_grado, año_academico, fecha_matricula, estado) " +
+                "VALUES (?, ?, ?, CURRENT_DATE, 'Activo') ON DUPLICATE KEY UPDATE id_grado = VALUES(id_grado), estado = 'Activo'";
         try (Connection conn = DatabaseConfig.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
@@ -164,8 +176,8 @@ public class StudentDAO {
             ps.setInt(3, academicYear);
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
-            LoggerUtil.error(String.format("Error enrolling student %d in grade %d for year %d", studentId, gradeId, academicYear), e);
-            return false;
+            LoggerUtil.error("Error enrolling student " + studentId + " in grade " + gradeId, e);
+            throw new IllegalStateException("Error al matricular el estudiante en el grado: " + e.getMessage());
         }
     }
 
@@ -178,10 +190,12 @@ public class StudentDAO {
         s.setSecondName(rs.getString("segundo_nombre"));
         s.setFirstLastName(rs.getString("primer_apellido"));
         s.setSecondLastName(rs.getString("segundo_apellido"));
-        Date birth = rs.getDate("fecha_nacimiento");
-        if (birth != null) {
-            s.setBirthDate(birth.toLocalDate());
+
+        Date birthDate = rs.getDate("fecha_nacimiento");
+        if (birthDate != null) {
+            s.setBirthDate(birthDate.toLocalDate());
         }
+
         s.setGender(rs.getString("genero"));
         s.setAddress(rs.getString("direccion"));
         s.setPhone(rs.getString("telefono"));
@@ -189,10 +203,12 @@ public class StudentDAO {
         s.setBloodType(rs.getString("tipo_sangre"));
         s.setAllergies(rs.getString("alergias"));
         s.setMedicalConditions(rs.getString("condiciones_medicas"));
-        Date adm = rs.getDate("fecha_ingreso");
-        if (adm != null) {
-            s.setAdmissionDate(adm.toLocalDate());
+
+        Date admissionDate = rs.getDate("fecha_ingreso");
+        if (admissionDate != null) {
+            s.setAdmissionDate(admissionDate.toLocalDate());
         }
+
         s.setStatus(rs.getString("estado"));
         return s;
     }
