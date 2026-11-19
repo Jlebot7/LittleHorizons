@@ -45,6 +45,16 @@ public class PaymentDAO {
             }
         } catch (SQLException e) {
             LoggerUtil.error("Failed to save payment for student " + payment.getIdStudent(), e);
+            if (e.getErrorCode() == 1452) {
+                throw new IllegalStateException("El estudiante (ID: " + payment.getIdStudent() + "), acudiente (ID: " + payment.getIdGuardian() + ") o concepto (ID: " + payment.getIdConcept() + ") no existe en el sistema.");
+            }
+            if (e.getErrorCode() == 1062) {
+                throw new IllegalStateException("El número de recibo " + payment.getReceiptNumber() + " ya está registrado.");
+            }
+            if (e.getErrorCode() == 1265 || e.getErrorCode() == 1406) {
+                throw new IllegalStateException("El período académico o método de pago contiene un valor no admitido.");
+            }
+            throw new IllegalStateException("Error al registrar el pago en la base de datos: " + e.getMessage());
         }
         return null;
     }
@@ -319,7 +329,6 @@ public class PaymentDAO {
         inv.setGuardianName(rs.getString("nom_acudiente"));
         inv.setConceptName(rs.getString("nombre_concepto"));
 
-        // Calcular desglose tributario bajo Estatuto Tributario
         TaxBreakdown tax = TaxCalculator.calculateTax(inv.getAmount(), inv.getConceptName());
         inv.setSubtotalAmount(tax.getBaseAmount());
         inv.setTaxAmount(tax.getTaxAmount());
