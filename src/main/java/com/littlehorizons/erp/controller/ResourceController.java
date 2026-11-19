@@ -22,19 +22,18 @@ public class ResourceController {
     public void run() {
         boolean back = false;
         while (!back) {
-            ConsoleHelper.printHeader("GESTIÓN DE RECURSOS, BIBLIOTECA Y LABORATORIOS", "Colegio Little Horizons");
-            System.out.println("1. Inventario general de recursos (Libros, Equipos, Tecnología)");
-            System.out.println("2. Registrar nuevo recurso en inventario");
-            System.out.println("3. Registrar préstamo a ESTUDIANTE (Validación de disponibilidad)");
-            System.out.println("4. Registrar devolución de recurso por ESTUDIANTE");
-            System.out.println("5. Registrar préstamo a PROFESOR");
-            System.out.println("6. Registrar devolución de recurso por PROFESOR");
-            System.out.println("7. Reporte de préstamos vencidos (Stream API)");
-            System.out.println("8. Consultar préstamos activos (Estudiantes y Profesores)");
+            ConsoleHelper.printHeader("GESTIÓN DE RECURSOS (BIBLIOTECA Y LABORATORIOS)", "Colegio Little Horizons");
+            System.out.println("1. Inventario general de recursos institucionales");
+            System.out.println("2. Registrar nuevo recurso inventariable");
+            System.out.println("3. Registrar préstamo a estudiante");
+            System.out.println("4. Registrar devolución de recurso por estudiante");
+            System.out.println("5. Registrar préstamo de equipo/material a docente");
+            System.out.println("6. Registrar devolución de recurso por docente");
+            System.out.println("7. Reporte de préstamos vencidos (No devueltos a la fecha)");
             System.out.println("0. Regresar al Menú Principal");
             System.out.println();
 
-            int option = ConsoleInputReader.readInt("Seleccione una opción: ", 0, 8);
+            int option = ConsoleInputReader.readInt("Seleccione una opción: ", 0, 7);
             switch (option) {
                 case 1 -> listResources();
                 case 2 -> registerResource();
@@ -43,7 +42,6 @@ public class ResourceController {
                 case 5 -> loanToTeacher();
                 case 6 -> returnTeacherLoan();
                 case 7 -> showOverdueLoansReport();
-                case 8 -> listActiveLoans();
                 case 0 -> back = true;
             }
         }
@@ -86,11 +84,19 @@ public class ResourceController {
         String loc = ConsoleInputReader.readString("Ubicación física (ej: Biblioteca - Estante A1): ");
 
         Resource r = new Resource(null, code, name, catId, desc, acqDate, loc, "Disponible");
-        Integer id = resourceService.registerResource(r);
-        if (id != null) {
-            ConsoleHelper.printSuccess("Recurso registrado exitosamente con ID: " + id);
-        } else {
-            ConsoleHelper.printError("Error al registrar el recurso.");
+        try {
+            Integer id = resourceService.registerResource(r);
+            if (id != null) {
+                ConsoleHelper.printSuccess("Recurso registrado exitosamente con ID: " + id);
+            } else {
+                ConsoleHelper.printError("Error al registrar el recurso.");
+            }
+        } catch (IllegalArgumentException e) {
+            ConsoleHelper.printError("Validación de recurso fallida: " + e.getMessage());
+        } catch (IllegalStateException e) {
+            ConsoleHelper.printError(e.getMessage());
+        } catch (Exception e) {
+            ConsoleHelper.printError("Error al registrar el recurso: " + e.getMessage());
         }
         ConsoleInputReader.waitForEnter();
     }
@@ -110,6 +116,10 @@ public class ResourceController {
             } else {
                 ConsoleHelper.printError("No se pudo registrar el préstamo.");
             }
+        } catch (IllegalArgumentException e) {
+            ConsoleHelper.printError("Validación fallida: " + e.getMessage());
+        } catch (IllegalStateException e) {
+            ConsoleHelper.printError(e.getMessage());
         } catch (Exception e) {
             ConsoleHelper.printError(e.getMessage());
         }
@@ -119,11 +129,15 @@ public class ResourceController {
     private void returnStudentLoan() {
         ConsoleHelper.printSubHeader("DEVOLUCIÓN DE RECURSO (ESTUDIANTE)");
         int loanId = ConsoleInputReader.readInt("Ingrese el ID del préstamo a devolver: ", 1, 99999);
-        boolean ok = resourceService.returnStudentLoan(loanId);
-        if (ok) {
-            ConsoleHelper.printSuccess("Devolución registrada con éxito. El recurso vuelve a estar 'Disponible' en inventario.");
-        } else {
-            ConsoleHelper.printError("No se pudo procesar la devolución.");
+        try {
+            boolean ok = resourceService.returnStudentLoan(loanId);
+            if (ok) {
+                ConsoleHelper.printSuccess("Devolución registrada con éxito. El recurso vuelve a estar 'Disponible' en inventario.");
+            } else {
+                ConsoleHelper.printError("No se pudo procesar la devolución.");
+            }
+        } catch (Exception e) {
+            ConsoleHelper.printError("Error al procesar devolución: " + e.getMessage());
         }
         ConsoleInputReader.waitForEnter();
     }
@@ -143,6 +157,10 @@ public class ResourceController {
             } else {
                 ConsoleHelper.printError("No se pudo registrar el préstamo.");
             }
+        } catch (IllegalArgumentException e) {
+            ConsoleHelper.printError("Validación fallida: " + e.getMessage());
+        } catch (IllegalStateException e) {
+            ConsoleHelper.printError(e.getMessage());
         } catch (Exception e) {
             ConsoleHelper.printError(e.getMessage());
         }
@@ -152,71 +170,52 @@ public class ResourceController {
     private void returnTeacherLoan() {
         ConsoleHelper.printSubHeader("DEVOLUCIÓN DE RECURSO (PROFESOR)");
         int loanId = ConsoleInputReader.readInt("Ingrese el ID del préstamo docente a devolver: ", 1, 99999);
-        boolean ok = resourceService.returnTeacherLoan(loanId);
-        if (ok) {
-            ConsoleHelper.printSuccess("Devolución docente registrada. El recurso está 'Disponible'.");
-        } else {
-            ConsoleHelper.printError("No se pudo procesar la devolución.");
+        try {
+            boolean ok = resourceService.returnTeacherLoan(loanId);
+            if (ok) {
+                ConsoleHelper.printSuccess("Devolución docente registrada. El recurso está 'Disponible'.");
+            } else {
+                ConsoleHelper.printError("No se pudo procesar la devolución.");
+            }
+        } catch (Exception e) {
+            ConsoleHelper.printError("Error al procesar devolución: " + e.getMessage());
         }
         ConsoleInputReader.waitForEnter();
     }
 
     private void showOverdueLoansReport() {
         ConsoleHelper.printSubHeader("REPORTE DE PRÉSTAMOS VENCIDOS (NO DEVUELTOS A LA FECHA)");
-        List<StudentLoan> overdueStudents = resourceService.getOverdueStudentLoans();
-        List<TeacherLoan> overdueTeachers = resourceService.getOverdueTeacherLoans();
+        List<StudentLoan> overdueStudentLoans = resourceService.getOverdueStudentLoans();
+        List<TeacherLoan> overdueTeacherLoans = resourceService.getOverdueTeacherLoans();
 
-        if (overdueStudents.isEmpty() && overdueTeachers.isEmpty()) {
-            ConsoleHelper.printSuccess("¡Excelente! No hay préstamos con fecha de entrega vencida.");
+        System.out.println("1. Préstamos Vencidos - Estudiantes:");
+        if (overdueStudentLoans.isEmpty()) {
+            ConsoleHelper.printSuccess("No hay préstamos vencidos de estudiantes.");
         } else {
-            if (!overdueStudents.isEmpty()) {
-                System.out.println("\nPréstamos vencidos a ESTUDIANTES:");
-                System.out.printf("%-5s | %-28s | %-25s | %-12s | %-10s%n", "ID", "RECURSO", "ESTUDIANTE", "FECHA ESPERADA", "ESTADO");
-                System.out.println("─".repeat(85));
-                for (StudentLoan sl : overdueStudents) {
-                    System.out.printf("%-5d | %-28s | %-25s | %-14s | %-10s%n",
-                            sl.getIdLoan(), sl.getResourceName(), sl.getStudentName(),
-                            sl.getExpectedReturnDate(), sl.getStatus());
-                }
-                System.out.println("─".repeat(85));
+            System.out.printf("%-4s | %-12s | %-32s | %-25s | %-12s | %-12s%n",
+                    "ID", "REC-ID", "RECURSO", "ESTUDIANTE", "F. PRÉSTAMO", "F. ESPERADA");
+            System.out.println("─".repeat(110));
+            for (StudentLoan sl : overdueStudentLoans) {
+                System.out.printf("%-4d | %-12d | %-32s | %-25s | %-12s | %-12s%n",
+                        sl.getIdLoan(), sl.getIdResource(), sl.getResourceName(),
+                        sl.getStudentName(), sl.getLoanDate(), sl.getExpectedReturnDate());
             }
-
-            if (!overdueTeachers.isEmpty()) {
-                System.out.println("\nPréstamos vencidos a PROFESORES:");
-                System.out.printf("%-5s | %-28s | %-25s | %-12s | %-10s%n", "ID", "RECURSO", "PROFESOR", "FECHA ESPERADA", "ESTADO");
-                System.out.println("─".repeat(85));
-                for (TeacherLoan tl : overdueTeachers) {
-                    System.out.printf("%-5d | %-28s | %-25s | %-14s | %-10s%n",
-                            tl.getIdLoan(), tl.getResourceName(), tl.getTeacherName(),
-                            tl.getExpectedReturnDate(), tl.getStatus());
-                }
-                System.out.println("─".repeat(85));
-            }
-        }
-        ConsoleInputReader.waitForEnter();
-    }
-
-    private void listActiveLoans() {
-        ConsoleHelper.printSubHeader("PRÉSTAMOS ACTIVOS EN CIRCULACIÓN");
-        List<StudentLoan> sLoans = resourceService.getActiveStudentLoans();
-        List<TeacherLoan> tLoans = resourceService.getActiveTeacherLoans();
-
-        System.out.println("Préstamos a Estudiantes:");
-        if (sLoans.isEmpty()) {
-            System.out.println("  (Sin préstamos activos de estudiantes)");
-        } else {
-            for (StudentLoan sl : sLoans) {
-                System.out.println("  " + sl);
-            }
+            System.out.println("─".repeat(110));
         }
 
-        System.out.println("\nPréstamos a Profesores:");
-        if (tLoans.isEmpty()) {
-            System.out.println("  (Sin préstamos activos de profesores)");
+        System.out.println("\n2. Préstamos Vencidos - Profesores:");
+        if (overdueTeacherLoans.isEmpty()) {
+            ConsoleHelper.printSuccess("No hay préstamos vencidos de profesores.");
         } else {
-            for (TeacherLoan tl : tLoans) {
-                System.out.println("  " + tl);
+            System.out.printf("%-4s | %-12s | %-32s | %-25s | %-12s | %-12s%n",
+                    "ID", "REC-ID", "RECURSO", "PROFESOR", "F. PRÉSTAMO", "F. ESPERADA");
+            System.out.println("─".repeat(110));
+            for (TeacherLoan tl : overdueTeacherLoans) {
+                System.out.printf("%-4d | %-12d | %-32s | %-25s | %-12s | %-12s%n",
+                        tl.getIdLoan(), tl.getIdResource(), tl.getResourceName(),
+                        tl.getTeacherName(), tl.getLoanDate(), tl.getExpectedReturnDate());
             }
+            System.out.println("─".repeat(110));
         }
         ConsoleInputReader.waitForEnter();
     }
