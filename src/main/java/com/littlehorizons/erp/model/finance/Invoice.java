@@ -13,13 +13,11 @@ public class Invoice {
     private String pdfFileName;
     private String filePath;
 
-    // Nuevos formatos de visualización y exportación
     private String txtFileName;
     private String txtFilePath;
     private String xmlFileName;
     private String xmlFilePath;
 
-    // Campos tributarios bajo el marco del Estatuto Tributario
     private BigDecimal subtotalAmount;
     private BigDecimal taxAmount;
     private BigDecimal taxRate;
