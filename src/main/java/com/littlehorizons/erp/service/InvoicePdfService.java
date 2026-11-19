@@ -152,6 +152,7 @@ public class InvoicePdfService {
                                                    PaymentConcept concept, Payment payment) {
         try {
             ensureDirectoryExists();
+
             BigDecimal amountPaid = payment != null && payment.getAmountPaid() != null
                     ? payment.getAmountPaid() : BigDecimal.ZERO;
             String buyerDocNumber = guardian != null && guardian.getDocumentNumber() != null
@@ -159,31 +160,26 @@ public class InvoicePdfService {
 
             String cufe = CufeGenerator.generateCufe(invoiceNumber, issueDate, amountPaid, buyerDocNumber);
 
-            // Cálculo y desagregación tributaria bajo el Estatuto Tributario (Art. 476 y 617)
             TaxBreakdown tax = TaxCalculator.calculateTax(amountPaid, concept);
 
             String qrPayload = String.format("NumFac: %s\nFecFac: %s\nNitFac: %s\nDocAdq: %s\nValFac: %s\nCUFE: %s",
                     invoiceNumber, issueDate, SCHOOL_NIT, buyerDocNumber, amountPaid, cufe);
             byte[] qrBytes = generateQrCodeBytes(qrPayload, 150, 150);
 
-            // 1. Generación de PDF
             String pdfFileName = String.format("factura_%s.pdf", invoiceNumber);
             String pdfFilePath = INVOICES_DIR + File.separator + pdfFileName;
             writePdfFile(pdfFilePath, invoiceNumber, issueDate, cufe, student, guardian, concept.getConceptName(), payment, tax, qrBytes);
 
-            // 2. Generación de TXT (estándar plano legible para agentes / terminal)
             String txtFileName = String.format("factura_%s.txt", invoiceNumber);
             String txtFilePath = INVOICES_DIR + File.separator + txtFileName;
             String txtContent = invoiceTxtService.generateTxtContent(invoiceNumber, issueDate, cufe, student, guardian, concept, payment, tax);
             invoiceTxtService.writeTxtFile(txtFilePath, txtContent);
 
-            // 3. Generación de XML (estándar UBL 2.1 MUISCA / DIAN)
             String xmlFileName = String.format("factura_%s.xml", invoiceNumber);
             String xmlFilePath = INVOICES_DIR + File.separator + xmlFileName;
             String xmlContent = invoiceXmlService.generateXmlContent(invoiceNumber, issueDate, cufe, student, guardian, concept, payment, tax);
             invoiceXmlService.writeXmlFile(xmlFilePath, xmlContent);
 
-            // Crear y configurar modelo Invoice
             Invoice invoice = new Invoice();
             invoice.setInvoiceNumber(invoiceNumber);
             invoice.setIdPayment(payment != null && payment.getIdPago() != null ? payment.getIdPago() : 1);
@@ -311,14 +307,12 @@ public class InvoicePdfService {
         empty.setColspan(3);
         empty.setBorder(Rectangle.NO_BORDER);
 
-        // Subtotal Base Gravable
         itemsTable.addCell(empty);
         PdfPCell subCell = new PdfPCell(new Phrase("Base Imponible:", boldFont));
         subCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
         itemsTable.addCell(subCell);
         itemsTable.addCell(new Phrase(String.format("COP $%,.2f", tax.getBaseAmount()), normalFont));
 
-        // Discriminación IVA (Art. 617 y Art. 476 E.T.)
         String ivaLabel = tax.isExempt()
                 ? "IVA (0% Excluido Art. 476):"
                 : String.format("IVA (Tarifa %s%%):", tax.getTaxRate().multiply(new BigDecimal("100")).stripTrailingZeros().toPlainString());
@@ -329,7 +323,6 @@ public class InvoicePdfService {
         itemsTable.addCell(ivaCell);
         itemsTable.addCell(new Phrase(String.format("COP $%,.2f", tax.getTaxAmount()), normalFont));
 
-        // Total Factura
         itemsTable.addCell(empty);
         PdfPCell totalCell = new PdfPCell(new Phrase("TOTAL A PAGAR:", boldFont));
         totalCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
