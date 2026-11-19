@@ -31,7 +31,16 @@ public class AcademicRecordDAO {
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
             LoggerUtil.error("Error saving academic record for student " + record.getIdStudent(), e);
-            return false;
+            if (e.getErrorCode() == 1452) {
+                throw new IllegalStateException("El estudiante (ID: " + record.getIdStudent() + "), materia (ID: " + record.getIdSubject() + ") o profesor (ID: " + record.getIdTeacher() + ") no existe en el sistema.");
+            }
+            if (e.getErrorCode() == 1265 || e.getErrorCode() == 1406) {
+                throw new IllegalStateException("El período académico no es válido (Opciones: I, II, III, IV, Final).");
+            }
+            if (e.getErrorCode() == 3819) {
+                throw new IllegalStateException("La nota numérica viola la restricción (debe estar entre 0.0 y 5.0).");
+            }
+            throw new IllegalStateException("Error en base de datos al registrar calificación: " + e.getMessage());
         }
     }
 
@@ -91,10 +100,6 @@ public class AcademicRecordDAO {
         List<AcademicRecord> list = new ArrayList<>();
         String sql = "SELECT r.*, CONCAT(e.primer_nombre, ' ', e.primer_apellido) AS nom_estudiante, " +
                 "m.nombre_materia, CONCAT(p.primer_nombre, ' ', p.primer_apellido) AS nom_profesor " +
-                "FROM registros_academicos r " +
-                "JOIN estudiantes e ON r.id_estudiante = e.id_estudiante " +
-                "JOIN materias m ON r.id_materia = m.id_materia " +
-                "JOIN profesores p ON r.id_profesor = p.id_profesor " +
                 "ORDER BY r.id_registro DESC LIMIT 200";
 
         try (Connection conn = DatabaseConfig.getConnection();
