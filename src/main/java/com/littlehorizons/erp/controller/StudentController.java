@@ -53,7 +53,7 @@ public class StudentController {
         String firstLastName = ConsoleInputReader.readPersonName("Primer apellido: ");
         String secondLastName = ConsoleInputReader.readOptionalPersonName("Segundo apellido (opcional): ");
         LocalDate birthDate = ConsoleInputReader.readStudentBirthDate("Fecha de nacimiento");
-        String gender = ConsoleInputReader.readString("Género (M/F/Otro): ").toUpperCase();
+        String gender = ConsoleInputReader.readGender("Género (M/F/Otro): ");
         String address = ConsoleInputReader.readString("Dirección residencial: ");
         String phone = ConsoleInputReader.readPhone("Teléfono de contacto: ", false);
         String email = ConsoleInputReader.readEmail("Correo electrónico: ", false);
@@ -70,10 +70,14 @@ public class StudentController {
             if (id != null) {
                 ConsoleHelper.printSuccess("Estudiante registrado exitosamente con ID interno: " + id);
             } else {
-                ConsoleHelper.printError("No se pudo registrar el estudiante. Verifique el número de documento.");
+                ConsoleHelper.printError("No se pudo completar el registro del estudiante en el sistema.");
             }
+        } catch (IllegalArgumentException e) {
+            ConsoleHelper.printError("Validación de campo fallida: " + e.getMessage());
+        } catch (IllegalStateException e) {
+            ConsoleHelper.printError(e.getMessage());
         } catch (Exception e) {
-            ConsoleHelper.printError("Error al registrar: " + e.getMessage());
+            ConsoleHelper.printError("Error inesperado al registrar el estudiante: " + e.getMessage());
         }
         ConsoleInputReader.waitForEnter();
     }
@@ -166,6 +170,10 @@ public class StudentController {
             } else {
                 ConsoleHelper.printError("No se pudo registrar el acudiente.");
             }
+        } catch (IllegalArgumentException e) {
+            ConsoleHelper.printError("Validación fallida: " + e.getMessage());
+        } catch (IllegalStateException e) {
+            ConsoleHelper.printError(e.getMessage());
         } catch (Exception e) {
             ConsoleHelper.printError("Error al registrar acudiente: " + e.getMessage());
         }
@@ -191,12 +199,16 @@ public class StudentController {
         int gradeId = ConsoleInputReader.readInt("Seleccione el ID del grado: ", 1, grades.size());
         int year = ConsoleInputReader.readInt("Año académico (ej: 2024): ", 2020, 2030);
 
-        boolean enrolled = academicService.enrollStudentInGrade(studentId, gradeId, year);
-        if (enrolled) {
-            ConsoleHelper.printSuccess(String.format("Estudiante '%s' matriculado exitosamente en el grado seleccionado para el año %d.",
-                    stOpt.get().getFullName(), year));
-        } else {
-            ConsoleHelper.printError("Error al procesar la matrícula.");
+        try {
+            boolean enrolled = academicService.enrollStudentInGrade(studentId, gradeId, year);
+            if (enrolled) {
+                ConsoleHelper.printSuccess(String.format("Estudiante '%s' matriculado exitosamente en el grado seleccionado para el año %d.",
+                        stOpt.get().getFullName(), year));
+            } else {
+                ConsoleHelper.printError("Error al procesar la matrícula.");
+            }
+        } catch (Exception e) {
+            ConsoleHelper.printError("Error al matricular: " + e.getMessage());
         }
         ConsoleInputReader.waitForEnter();
     }
