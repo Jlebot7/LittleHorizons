@@ -2,7 +2,6 @@ package com.littlehorizons.erp.dao.academic;
 
 import com.littlehorizons.erp.config.DatabaseConfig;
 import com.littlehorizons.erp.model.academic.Guardian;
-import com.littlehorizons.erp.model.academic.Student;
 import com.littlehorizons.erp.util.LoggerUtil;
 
 import java.sql.*;
@@ -47,6 +46,10 @@ public class GuardianDAO {
             }
         } catch (SQLException e) {
             LoggerUtil.error("Failed to save guardian: " + guardian.getDocumentNumber(), e);
+            if (e.getErrorCode() == 1062) {
+                throw new IllegalStateException("El documento del acudiente ya se encuentra registrado en el sistema.");
+            }
+            throw new IllegalStateException("Error al registrar el acudiente: " + e.getMessage());
         }
         return null;
     }
@@ -68,19 +71,19 @@ public class GuardianDAO {
         return Optional.empty();
     }
 
-    public Optional<Guardian> findByDocument(String docNumber) {
+    public Optional<Guardian> findByDocument(String documentNumber) {
         String sql = "SELECT * FROM acudientes WHERE numero_documento = ?";
         try (Connection conn = DatabaseConfig.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
-            ps.setString(1, docNumber);
+            ps.setString(1, documentNumber);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     return Optional.of(mapResultSetToGuardian(rs));
                 }
             }
         } catch (SQLException e) {
-            LoggerUtil.error("Error finding guardian by doc: " + docNumber, e);
+            LoggerUtil.error("Error finding guardian by document: " + documentNumber, e);
         }
         return Optional.empty();
     }
@@ -101,32 +104,24 @@ public class GuardianDAO {
         return list;
     }
 
-    public List<Student> findStudentsByGuardian(int guardianId) {
-        List<Student> students = new ArrayList<>();
-        String sql = "SELECT e.* FROM estudiantes e " +
-                "INNER JOIN estudiante_acudiente ea ON e.id_estudiante = ea.id_estudiante " +
-                "WHERE ea.id_acudiente = ?";
+    public List<Guardian> findByStudentId(int studentId) {
+        List<Guardian> list = new ArrayList<>();
+        String sql = "SELECT a.* FROM acudientes a " +
+                "JOIN estudiante_acudiente ea ON a.id_acudiente = ea.id_acudiente " +
+                "WHERE ea.id_estudiante = ?";
         try (Connection conn = DatabaseConfig.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
-            ps.setInt(1, guardianId);
+            ps.setInt(1, studentId);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    Student s = new Student();
-                    s.setIdStudent(rs.getInt("id_estudiante"));
-                    s.setDocumentType(rs.getString("tipo_documento"));
-                    s.setDocumentNumber(rs.getString("numero_documento"));
-                    s.setFirstName(rs.getString("primer_nombre"));
-                    s.setSecondName(rs.getString("segundo_nombre"));
-                    s.setFirstLastName(rs.getString("primer_apellido"));
-                    s.setSecondLastName(rs.getString("segundo_apellido"));
-                    students.add(s);
+                    list.add(mapResultSetToGuardian(rs));
                 }
             }
         } catch (SQLException e) {
-            LoggerUtil.error("Error finding students for guardian: " + guardianId, e);
+            LoggerUtil.error("Error fetching guardians for student ID: " + studentId, e);
         }
-        return students;
+        return list;
     }
 
     private Guardian mapResultSetToGuardian(ResultSet rs) throws SQLException {
