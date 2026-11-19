@@ -83,7 +83,7 @@ public class FinanceController {
         };
 
         int year = ConsoleInputReader.readInt("Año lectivo (ej: 2024): ", 2020, 2030);
-        String period = ConsoleInputReader.readString("Período (I / II / III / IV / Anual): ").toUpperCase();
+        String period = ConsoleInputReader.readAcademicPeriod("Período (I / II / III / IV / Anual): ", false, true);
         String notes = ConsoleInputReader.readOptionalString("Notas adicionales en factura: ");
 
         Payment payment = new Payment(null, studentId, guardianId, conceptId, amountPaid,
@@ -111,6 +111,10 @@ public class FinanceController {
             } else {
                 ConsoleHelper.printError("No se pudo procesar el pago o generar la factura.");
             }
+        } catch (IllegalArgumentException e) {
+            ConsoleHelper.printError("Validación de pago fallida: " + e.getMessage());
+        } catch (IllegalStateException e) {
+            ConsoleHelper.printError(e.getMessage());
         } catch (Exception e) {
             ConsoleHelper.printError("Error en procesamiento financiero: " + e.getMessage());
         }
@@ -269,7 +273,7 @@ public class FinanceController {
         ConsoleHelper.printSubHeader("REPORTE DE ESTUDIANTES CON PAGOS PENDIENTES (CARTERA MOROSA)");
         System.out.println("Identificación de estudiantes que NO han pagado la pensión escolar.");
         int year = ConsoleInputReader.readInt("Año lectivo: ", 2020, 2030);
-        String period = ConsoleInputReader.readString("Período (I / II / III / IV): ").toUpperCase();
+        String period = ConsoleInputReader.readAcademicPeriod("Período (I / II / III / IV): ", false, false);
 
         List<Student> defaulters = financeService.getDefaulterStudents(2, year, period);
 
