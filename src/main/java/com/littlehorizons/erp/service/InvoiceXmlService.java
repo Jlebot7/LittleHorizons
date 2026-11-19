@@ -35,10 +35,6 @@ public class InvoiceXmlService {
         }
     }
 
-    /**
-     * Mapea el método de pago al catálogo de medios de pago DIAN / MUISCA UBL 2.1:
-     * 10 = Efectivo, 42 = Consignación bancaria / Transferencia, 48 = Tarjeta Crédito, 49 = Tarjeta Débito.
-     */
     private String mapPaymentMeansCode(String method) {
         if (method == null) return "10";
         String m = method.toLowerCase();
@@ -48,10 +44,6 @@ public class InvoiceXmlService {
         return "10";
     }
 
-    /**
-     * Mapea tipo de documento a código DIAN UBL 2.1:
-     * 13 = Cédula de Ciudadanía, 22 = Cédula de Extranjería, 11 = Registro Civil, 12 = Tarjeta de Identidad, 41 = Pasaporte.
-     */
     private String mapDocumentTypeCode(String docType) {
         if (docType == null) return "13";
         switch (docType.toUpperCase()) {
@@ -72,9 +64,6 @@ public class InvoiceXmlService {
                 .replace("'", "&apos;");
     }
 
-    /**
-     * Construye el documento XML en estándar UBL 2.1 reglamentado por la DIAN (estándar MUISCA).
-     */
     public String generateXmlContent(String invoiceNumber, LocalDate issueDate, String cufe,
                                      Student student, Guardian guardian, PaymentConcept concept,
                                      Payment payment, TaxBreakdown tax) {
@@ -111,7 +100,6 @@ public class InvoiceXmlService {
         xml.append("    xmlns:ext=\"urn:oasis:names:specification:ubl:schema:xsd:CommonExtensionComponents-2\"\n");
         xml.append("    xmlns:ds=\"http://www.w3.org/2000/09/xmldsig#\">\n");
 
-        // UBLExtensions con DIAN Extensions
         xml.append("  <ext:UBLExtensions>\n");
         xml.append("    <ext:UBLExtension>\n");
         xml.append("      <ext:ExtensionContent>\n");
@@ -150,7 +138,6 @@ public class InvoiceXmlService {
         xml.append("    </ext:UBLExtension>\n");
         xml.append("  </ext:UBLExtensions>\n\n");
 
-        // Metadatos de Factura
         xml.append("  <cbc:UBLVersionID>UBL 2.1</cbc:UBLVersionID>\n");
         xml.append("  <cbc:CustomizationID>10</cbc:CustomizationID>\n");
         xml.append("  <cbc:ProfileID>DIAN 2.1: Factura Electrónica de Venta</cbc:ProfileID>\n");
@@ -166,7 +153,6 @@ public class InvoiceXmlService {
         xml.append("  <cbc:DocumentCurrencyCode>COP</cbc:DocumentCurrencyCode>\n");
         xml.append("  <cbc:LineCountNumeric>1</cbc:LineCountNumeric>\n\n");
 
-        // Emisor (Colegio Little Horizons)
         xml.append("  <cac:AccountingSupplierParty>\n");
         xml.append("    <cac:Party>\n");
         xml.append("      <cac:PartyIdentification>\n");
@@ -193,7 +179,6 @@ public class InvoiceXmlService {
         xml.append("    </cac:Party>\n");
         xml.append("  </cac:AccountingSupplierParty>\n\n");
 
-        // Adquirente / Cliente
         xml.append("  <cac:AccountingCustomerParty>\n");
         xml.append("    <cac:Party>\n");
         xml.append("      <cac:PartyIdentification>\n");
@@ -221,13 +206,11 @@ public class InvoiceXmlService {
         xml.append("    </cac:Party>\n");
         xml.append("  </cac:AccountingCustomerParty>\n\n");
 
-        // Medio de Pago
         xml.append("  <cac:PaymentMeans>\n");
         xml.append(String.format("    <cbc:PaymentMeansCode>%s</cbc:PaymentMeansCode>\n", payMeansCode));
         xml.append(String.format("    <cbc:PaymentDueDate>%s</cbc:PaymentDueDate>\n", issueDate.format(dtf)));
         xml.append("  </cac:PaymentMeans>\n\n");
 
-        // Impuestos Totales (Discriminación Art. 617 y Art. 476 E.T.)
         xml.append("  <cac:TaxTotal>\n");
         xml.append(String.format("    <cbc:TaxAmount currencyID=\"COP\">%s</cbc:TaxAmount>\n", tax.getTaxAmount().toPlainString()));
         xml.append("    <cac:TaxSubtotal>\n");
@@ -243,7 +226,6 @@ public class InvoiceXmlService {
         xml.append("    </cac:TaxSubtotal>\n");
         xml.append("  </cac:TaxTotal>\n\n");
 
-        // Totales Monetarios
         xml.append("  <cac:LegalMonetaryTotal>\n");
         xml.append(String.format("    <cbc:LineExtensionAmount currencyID=\"COP\">%s</cbc:LineExtensionAmount>\n", tax.getBaseAmount().toPlainString()));
         xml.append(String.format("    <cbc:TaxExclusiveAmount currencyID=\"COP\">%s</cbc:TaxExclusiveAmount>\n", tax.getBaseAmount().toPlainString()));
@@ -251,7 +233,6 @@ public class InvoiceXmlService {
         xml.append(String.format("    <cbc:PayableAmount currencyID=\"COP\">%s</cbc:PayableAmount>\n", tax.getTotalAmount().toPlainString()));
         xml.append("  </cac:LegalMonetaryTotal>\n\n");
 
-        // Línea de Factura (Item)
         xml.append("  <cac:InvoiceLine>\n");
         xml.append("    <cbc:ID>1</cbc:ID>\n");
         xml.append("    <cbc:InvoicedQuantity unitCode=\"EA\">1.000000</cbc:InvoicedQuantity>\n");
@@ -272,9 +253,6 @@ public class InvoiceXmlService {
         return xml.toString();
     }
 
-    /**
-     * Escribe el archivo .xml en el sistema de archivos.
-     */
     public boolean writeXmlFile(String filePath, String xmlContent) {
         try {
             ensureDirectoryExists();
