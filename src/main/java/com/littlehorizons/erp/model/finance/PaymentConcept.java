@@ -12,8 +12,7 @@ public class PaymentConcept {
     private Boolean isRecurring;
     private Boolean isActive;
 
-    // Marco fiscal Estatuto Tributario
-    private BigDecimal taxRate; // ej: 0.00 o 0.19
+    private BigDecimal taxRate;
     private Boolean isTaxExempt;
 
     public PaymentConcept() {
@@ -45,12 +44,6 @@ public class PaymentConcept {
         this.isTaxExempt = isTaxExempt;
     }
 
-    /**
-     * Aplica el marco legal del Estatuto Tributario:
-     * - Art. 476 Numeral 6 E.T.: Los servicios de educación formal (matrícula, pensión, derechos de grado, certificados)
-     *   están excluidos del impuesto sobre las ventas (IVA 0%).
-     * - Bienes y servicios comerciales (uniformes, libros de comercio general, cafetería, tienda escolar) gravados al 19%.
-     */
     public void evaluateTaxStatus() {
         if (taxRate != null && isTaxExempt != null) {
             return;
@@ -61,7 +54,6 @@ public class PaymentConcept {
             this.taxRate = new BigDecimal("0.19");
             this.isTaxExempt = false;
         } else {
-            // Educación formal excluida (Art. 476 num. 6 E.T.)
             this.taxRate = BigDecimal.ZERO;
             this.isTaxExempt = true;
         }
