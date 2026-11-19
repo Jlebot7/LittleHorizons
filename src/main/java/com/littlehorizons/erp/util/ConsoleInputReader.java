@@ -124,6 +124,52 @@ public final class ConsoleInputReader {
         }
     }
 
+    public static String readGender(String prompt) {
+        while (true) {
+            System.out.print(prompt);
+            String input = nextLineOrNull();
+            if (input == null) {
+                return "M";
+            }
+            String trimmed = input.trim().toUpperCase();
+            if (trimmed.equals("M") || trimmed.equals("F") || trimmed.equals("OTRO") || trimmed.equals("O")) {
+                if (trimmed.equals("O")) {
+                    return "Otro";
+                }
+                if (trimmed.equals("OTRO")) {
+                    return "Otro";
+                }
+                return trimmed;
+            }
+            System.out.println("  [!] Error: Género inválido. Opciones permitidas: M (Masculino), F (Femenino), Otro.");
+        }
+    }
+
+    public static String readAcademicPeriod(String prompt, boolean allowFinal, boolean allowAnnual) {
+        while (true) {
+            System.out.print(prompt);
+            String input = nextLineOrNull();
+            if (input == null) {
+                return "I";
+            }
+            String trimmed = input.trim().toUpperCase();
+            if (trimmed.equals("I") || trimmed.equals("II") || trimmed.equals("III") || trimmed.equals("IV")) {
+                return trimmed;
+            }
+            if (allowFinal && trimmed.equals("FINAL")) {
+                return "Final";
+            }
+            if (allowAnnual && (trimmed.equals("ANUAL") || trimmed.equals("ANNUAL"))) {
+                return "Anual";
+            }
+            StringBuilder sb = new StringBuilder("  [!] Error: Período inválido. Valores válidos: I, II, III, IV");
+            if (allowFinal) sb.append(", Final");
+            if (allowAnnual) sb.append(", Anual");
+            sb.append(".");
+            System.out.println(sb.toString());
+        }
+    }
+
     public static String readPhone(String prompt, boolean optional) {
         while (true) {
             System.out.print(prompt);
