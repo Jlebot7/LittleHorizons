@@ -55,18 +55,26 @@ public class AcademicController {
         int subjectId = ConsoleInputReader.readInt("ID de la materia: ", 1, 99999);
         int teacherId = ConsoleInputReader.readInt("ID del profesor evaluador: ", 1, 99999);
         int year = ConsoleInputReader.readInt("Año académico (ej: 2024): ", 2020, 2030);
-        String period = ConsoleInputReader.readString("Período académico (I / II / III / IV / Final): ").toUpperCase();
+        String period = ConsoleInputReader.readAcademicPeriod("Período académico (I / II / III / IV / Final): ", true, false);
 
         BigDecimal grade = ConsoleInputReader.readBigDecimal("Nota numérica (0.0 a 5.0): ",
                 new BigDecimal("0.0"), new BigDecimal("5.0"));
         String obs = ConsoleInputReader.readOptionalString("Observaciones cualitativas: ");
 
-        AcademicRecord record = new AcademicRecord(null, studentId, subjectId, teacherId, year, period, grade, obs, LocalDate.now());
-        boolean saved = academicService.recordGrade(record);
-        if (saved) {
-            ConsoleHelper.printSuccess(String.format("Calificación de %.1f registrada correctamente en período %s.", grade, period));
-        } else {
-            ConsoleHelper.printError("Error al registrar la calificación.");
+        try {
+            AcademicRecord record = new AcademicRecord(null, studentId, subjectId, teacherId, year, period, grade, obs, LocalDate.now());
+            boolean saved = academicService.recordGrade(record);
+            if (saved) {
+                ConsoleHelper.printSuccess(String.format("Calificación de %.1f registrada correctamente en período %s.", grade, period));
+            } else {
+                ConsoleHelper.printError("Error al registrar la calificación.");
+            }
+        } catch (IllegalArgumentException e) {
+            ConsoleHelper.printError("Validación de nota fallida: " + e.getMessage());
+        } catch (IllegalStateException e) {
+            ConsoleHelper.printError(e.getMessage());
+        } catch (Exception e) {
+            ConsoleHelper.printError("Error al registrar la calificación: " + e.getMessage());
         }
         ConsoleInputReader.waitForEnter();
     }
@@ -105,7 +113,7 @@ public class AcademicController {
         ConsoleHelper.printSubHeader("CÁLCULO AUTOMÁTICO DE PROMEDIO GENERAL (STREAM API)");
         int studentId = ConsoleInputReader.readInt("Ingrese el ID del estudiante: ", 1, 99999);
         int year = ConsoleInputReader.readInt("Año académico: ", 2020, 2030);
-        String period = ConsoleInputReader.readString("Período (I / II / III / IV / Final): ").toUpperCase();
+        String period = ConsoleInputReader.readAcademicPeriod("Período (I / II / III / IV / Final): ", true, false);
 
         BigDecimal average = academicService.calculateStudentPeriodAverage(studentId, year, period);
         Optional<Student> st = academicService.getStudentById(studentId);
@@ -131,7 +139,7 @@ public class AcademicController {
         ConsoleHelper.printSubHeader("CÁLCULO DE PROMEDIO DE CURSO POR MATERIA (STREAM API)");
         int subjectId = ConsoleInputReader.readInt("Ingrese el ID de la materia: ", 1, 99999);
         int year = ConsoleInputReader.readInt("Año académico: ", 2020, 2030);
-        String period = ConsoleInputReader.readString("Período (I / II / III / IV / Final): ").toUpperCase();
+        String period = ConsoleInputReader.readAcademicPeriod("Período (I / II / III / IV / Final): ", true, false);
 
         BigDecimal courseAvg = academicService.calculateSubjectCourseAverage(subjectId, year, period);
         System.out.println();
@@ -162,12 +170,20 @@ public class AcademicController {
         String obs = ConsoleInputReader.readOptionalString("Observaciones: ");
         int teacherId = ConsoleInputReader.readInt("ID del profesor que registra: ", 1, 99999);
 
-        Attendance att = new Attendance(null, studentId, subjectId, date, status, obs, teacherId);
-        boolean ok = academicService.registerAttendance(att);
-        if (ok) {
-            ConsoleHelper.printSuccess("Asistencia marcada como: " + status);
-        } else {
-            ConsoleHelper.printError("Error al registrar la asistencia.");
+        try {
+            Attendance att = new Attendance(null, studentId, subjectId, date, status, obs, teacherId);
+            boolean ok = academicService.registerAttendance(att);
+            if (ok) {
+                ConsoleHelper.printSuccess("Asistencia marcada como: " + status);
+            } else {
+                ConsoleHelper.printError("Error al registrar la asistencia.");
+            }
+        } catch (IllegalArgumentException e) {
+            ConsoleHelper.printError("Validación de asistencia fallida: " + e.getMessage());
+        } catch (IllegalStateException e) {
+            ConsoleHelper.printError(e.getMessage());
+        } catch (Exception e) {
+            ConsoleHelper.printError("Error al registrar asistencia: " + e.getMessage());
         }
         ConsoleInputReader.waitForEnter();
     }
@@ -181,7 +197,7 @@ public class AcademicController {
             ConsoleHelper.printSuccess("Excelente: No hay estudiantes que superen el límite de 3 ausencias registradas.");
         } else {
             System.out.println("Estudiantes con 3 o más inasistencias injustificadas:");
-            System.out.printf("%-10s | %-35s | %-15s%n", "ID ESTUDIANTE", "NOMBRE COMPLETO", "TOTAL AUSENCIAS");
+            System.out.printf("%-10s | %-35s | %-15s%n\", \"ID ESTUDIANTE\", \"NOMBRE COMPLETO\", \"TOTAL AUSENCIAS");
             System.out.println("─".repeat(65));
             report.forEach((id, count) -> {
                 Optional<Student> st = academicService.getStudentById(id);
@@ -198,14 +214,22 @@ public class AcademicController {
         int studentId = ConsoleInputReader.readInt("ID del estudiante: ", 1, 99999);
         int subjectId = ConsoleInputReader.readInt("ID de la materia: ", 1, 99999);
         int year = ConsoleInputReader.readInt("Año académico: ", 2020, 2030);
-        String period = ConsoleInputReader.readString("Período (I / II / III / IV): ").toUpperCase();
+        String period = ConsoleInputReader.readAcademicPeriod("Período (I / II / III / IV): ", false, false);
         String section = ConsoleInputReader.readOptionalString("Sección (A/B/C): ");
 
-        boolean ok = academicService.enrollStudentInSubject(studentId, subjectId, year, period, section.isEmpty() ? "A" : section);
-        if (ok) {
-            ConsoleHelper.printSuccess("Estudiante inscrito satisfactoriamente en la materia.");
-        } else {
-            ConsoleHelper.printError("Error al inscribir estudiante en la materia.");
+        try {
+            boolean ok = academicService.enrollStudentInSubject(studentId, subjectId, year, period, section.isEmpty() ? "A" : section);
+            if (ok) {
+                ConsoleHelper.printSuccess("Estudiante inscrito satisfactoriamente en la materia.");
+            } else {
+                ConsoleHelper.printError("Error al inscribir estudiante en la materia.");
+            }
+        } catch (IllegalArgumentException e) {
+            ConsoleHelper.printError("Validación de inscripción fallida: " + e.getMessage());
+        } catch (IllegalStateException e) {
+            ConsoleHelper.printError(e.getMessage());
+        } catch (Exception e) {
+            ConsoleHelper.printError("Error al inscribir estudiante: " + e.getMessage());
         }
         ConsoleInputReader.waitForEnter();
     }
