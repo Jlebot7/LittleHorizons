@@ -43,6 +43,10 @@ public class TeacherDAO {
             }
         } catch (SQLException e) {
             LoggerUtil.error("Failed to save teacher: " + teacher.getDocumentNumber(), e);
+            if (e.getErrorCode() == 1062) {
+                throw new IllegalStateException("El documento o correo del docente ya se encuentra registrado en el sistema.");
+            }
+            throw new IllegalStateException("Error al registrar el profesor en base de datos: " + e.getMessage());
         }
         return null;
     }
@@ -81,19 +85,22 @@ public class TeacherDAO {
     }
 
     public boolean assignToSubject(int teacherId, int subjectId, int year, String section) {
-        String sql = "INSERT INTO asignaciones_profesor (id_profesor, id_materia, año_academico, seccion) " +
-                "VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE seccion = VALUES(seccion)";
+        String sql = "INSERT INTO asignaciones_profesor (id_profesor, id_materia, año_academico, grupo_seccion) " +
+                "VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE grupo_seccion = VALUES(grupo_seccion)";
         try (Connection conn = DatabaseConfig.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setInt(1, teacherId);
             ps.setInt(2, subjectId);
             ps.setInt(3, year);
-            ps.setString(4, section != null ? section : "A");
+            ps.setString(4, section);
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
-            LoggerUtil.error(String.format("Error assigning teacher %d to subject %d", teacherId, subjectId), e);
-            return false;
+            LoggerUtil.error("Error assigning teacher to subject", e);
+            if (e.getErrorCode() == 1452) {
+                throw new IllegalStateException("El profesor (ID " + teacherId + ") o la materia (ID " + subjectId + ") no existen en la base de datos.");
+            }
+            throw new IllegalStateException("Error al registrar la asignación de carga académica: " + e.getMessage());
         }
     }
 
@@ -109,9 +116,9 @@ public class TeacherDAO {
         t.setEmail(rs.getString("correo_electronico"));
         t.setPhone(rs.getString("telefono"));
         t.setSpecialization(rs.getString("especializacion"));
-        Date hd = rs.getDate("fecha_contratacion");
-        if (hd != null) {
-            t.setHireDate(hd.toLocalDate());
+        Date hireDate = rs.getDate("fecha_contratacion");
+        if (hireDate != null) {
+            t.setHireDate(hireDate.toLocalDate());
         }
         t.setStatus(rs.getString("estado"));
         return t;
