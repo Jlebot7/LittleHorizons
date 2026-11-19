@@ -67,11 +67,6 @@ public final class TaxCalculator {
         }
     }
 
-    /**
-     * Calcula la desagregación de impuestos según el Estatuto Tributario colombiano (Art. 476 y 617 E.T.).
-     * Si el concepto es educativo (matrícula, pensión), está excluido (IVA 0%).
-     * Si el concepto es de bienes/servicios comerciales (uniformes, tienda), calcula IVA al 19%.
-     */
     public static TaxBreakdown calculateTax(BigDecimal amountPaid, PaymentConcept concept) {
         BigDecimal total = (amountPaid != null && amountPaid.compareTo(BigDecimal.ZERO) > 0)
                 ? amountPaid
@@ -89,7 +84,6 @@ public final class TaxCalculator {
         if (isExempt || rate.compareTo(BigDecimal.ZERO) == 0) {
             return new TaxBreakdown(total, total, BigDecimal.ZERO, EXEMPT_IVA_RATE, true, LEGAL_REF_EXCLUDED);
         } else {
-            // Precio incluye IVA al 19%: base = total / 1.19
             BigDecimal divisor = BigDecimal.ONE.add(rate);
             BigDecimal base = total.divide(divisor, 4, RoundingMode.HALF_UP);
             BigDecimal tax = total.subtract(base);
