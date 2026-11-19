@@ -79,11 +79,19 @@ public class ExtracurricularController {
         String schedule = ConsoleInputReader.readString("Días y horario de reunión (ej: Martes 3-5 PM): ");
 
         Club c = new Club(null, name, desc, teacherId, capacity, schedule, true);
-        Integer id = extracurricularService.registerClub(c);
-        if (id != null) {
-            ConsoleHelper.printSuccess("Club registrado exitosamente con ID: " + id);
-        } else {
-            ConsoleHelper.printError("Error al registrar el club.");
+        try {
+            Integer id = extracurricularService.registerClub(c);
+            if (id != null) {
+                ConsoleHelper.printSuccess("Club registrado exitosamente con ID: " + id);
+            } else {
+                ConsoleHelper.printError("Error al registrar el club.");
+            }
+        } catch (IllegalArgumentException e) {
+            ConsoleHelper.printError("Validación de club fallida: " + e.getMessage());
+        } catch (IllegalStateException e) {
+            ConsoleHelper.printError(e.getMessage());
+        } catch (Exception e) {
+            ConsoleHelper.printError("Error al registrar el club: " + e.getMessage());
         }
         ConsoleInputReader.waitForEnter();
     }
@@ -100,8 +108,12 @@ public class ExtracurricularController {
             } else {
                 ConsoleHelper.printError("No se pudo completar la inscripción.");
             }
-        } catch (Exception e) {
+        } catch (IllegalArgumentException e) {
+            ConsoleHelper.printError("Validación fallida: " + e.getMessage());
+        } catch (IllegalStateException e) {
             ConsoleHelper.printError(e.getMessage());
+        } catch (Exception e) {
+            ConsoleHelper.printError("Error al inscribir en club: " + e.getMessage());
         }
         ConsoleInputReader.waitForEnter();
     }
@@ -119,12 +131,12 @@ public class ExtracurricularController {
         System.out.println("Integrantes del " + clubOpt.get().getClubName() + ":");
         List<ClubMembership> members = extracurricularService.getClubMembers(clubId);
         if (members.isEmpty()) {
-            ConsoleHelper.printWarning("No hay estudiantes inscritos en este club.");
+            ConsoleHelper.printWarning("El club no cuenta con estudiantes inscritos actualmente.");
         } else {
-            System.out.printf("%-5s | %-35s | %-12s | %-10s%n", "ID MEM", "ESTUDIANTE", "FECHA INGRESO", "ESTADO");
+            System.out.printf("%-5s | %-32s | %-12s | %-10s%n", "ID", "ESTUDIANTE", "FECHA INGRESO", "ESTADO");
             System.out.println("─".repeat(70));
             for (ClubMembership m : members) {
-                System.out.printf("%-6d | %-35s | %-13s | %-10s%n",
+                System.out.printf("%-5d | %-32s | %-12s | %-10s%n",
                         m.getIdMembership(), m.getStudentName(), m.getJoinDate(), m.getStatus());
             }
             System.out.println("─".repeat(70));
@@ -162,11 +174,19 @@ public class ExtracurricularController {
         int orgId = ConsoleInputReader.readInt("ID del profesor organizador: ", 1, 99999);
 
         SchoolEvent ev = new SchoolEvent(null, name, desc, type, date, loc, comp, orgId, true);
-        Integer id = extracurricularService.registerEvent(ev);
-        if (id != null) {
-            ConsoleHelper.printSuccess("Evento programado exitosamente con ID: " + id);
-        } else {
-            ConsoleHelper.printError("Error al registrar el evento.");
+        try {
+            Integer id = extracurricularService.registerEvent(ev);
+            if (id != null) {
+                ConsoleHelper.printSuccess("Evento programado exitosamente con ID: " + id);
+            } else {
+                ConsoleHelper.printError("Error al registrar el evento.");
+            }
+        } catch (IllegalArgumentException e) {
+            ConsoleHelper.printError("Validación de evento fallida: " + e.getMessage());
+        } catch (IllegalStateException e) {
+            ConsoleHelper.printError(e.getMessage());
+        } catch (Exception e) {
+            ConsoleHelper.printError("Error al registrar el evento: " + e.getMessage());
         }
         ConsoleInputReader.waitForEnter();
     }
@@ -181,11 +201,19 @@ public class ExtracurricularController {
         String pos = ConsoleInputReader.readOptionalString("Posición obtenida si aplica (1er Lugar, 2do Lugar, 3er Lugar, Participante): ");
         String obs = ConsoleInputReader.readOptionalString("Observaciones o reconocimientos: ");
 
-        boolean ok = extracurricularService.registerParticipant(eventId, studentId, role, pos.isEmpty() ? "Participante" : pos, obs);
-        if (ok) {
-            ConsoleHelper.printSuccess("Participación registrada exitosamente.");
-        } else {
-            ConsoleHelper.printError("Error al registrar la participación.");
+        try {
+            boolean ok = extracurricularService.registerParticipant(eventId, studentId, role, pos.isEmpty() ? "Participante" : pos, obs);
+            if (ok) {
+                ConsoleHelper.printSuccess("Participación registrada exitosamente.");
+            } else {
+                ConsoleHelper.printError("Error al registrar la participación.");
+            }
+        } catch (IllegalArgumentException e) {
+            ConsoleHelper.printError("Validación fallida: " + e.getMessage());
+        } catch (IllegalStateException e) {
+            ConsoleHelper.printError(e.getMessage());
+        } catch (Exception e) {
+            ConsoleHelper.printError("Error al registrar la participación: " + e.getMessage());
         }
         ConsoleInputReader.waitForEnter();
     }
