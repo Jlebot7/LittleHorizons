@@ -127,7 +127,13 @@ public class SubjectDAO {
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
             LoggerUtil.error(String.format("Error enrolling student %d in subject %d", studentId, subjectId), e);
-            return false;
+            if (e.getErrorCode() == 1452) {
+                throw new IllegalStateException("El estudiante (ID: " + studentId + ") o la materia (ID: " + subjectId + ") no existe en el sistema.");
+            }
+            if (e.getErrorCode() == 1265 || e.getErrorCode() == 1406) {
+                throw new IllegalStateException("El período académico o sección contiene un valor inválido.");
+            }
+            throw new IllegalStateException("Error al inscribir materia en base de datos: " + e.getMessage());
         }
     }
 
