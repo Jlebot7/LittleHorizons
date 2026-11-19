@@ -33,7 +33,13 @@ public class AttendanceDAO {
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
             LoggerUtil.error("Error recording attendance for student " + attendance.getIdStudent(), e);
-            return false;
+            if (e.getErrorCode() == 1452) {
+                throw new IllegalStateException("El estudiante (ID: " + attendance.getIdStudent() + "), materia (ID: " + attendance.getIdSubject() + ") o profesor no existe en la base de datos.");
+            }
+            if (e.getErrorCode() == 1265 || e.getErrorCode() == 1406) {
+                throw new IllegalStateException("El estado de asistencia contiene un valor no admitido.");
+            }
+            throw new IllegalStateException("Error al registrar asistencia en base de datos: " + e.getMessage());
         }
     }
 
