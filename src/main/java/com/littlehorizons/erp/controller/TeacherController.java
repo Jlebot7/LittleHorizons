@@ -19,10 +19,10 @@ public class TeacherController {
     public void run() {
         boolean back = false;
         while (!back) {
-            ConsoleHelper.printHeader("GESTIÓN DE PROFESORES Y ASIGNACIONES", "Colegio Little Horizons");
+            ConsoleHelper.printHeader("GESTIÓN DE PROFESORES Y CARGA ACADÉMICA", "Colegio Little Horizons");
             System.out.println("1. Registrar nuevo profesor");
-            System.out.println("2. Listar todos los profesores");
-            System.out.println("3. Asignar materia a profesor");
+            System.out.println("2. Directorio general de profesores");
+            System.out.println("3. Asignar carga académica (Materia a profesor)");
             System.out.println("0. Regresar al Menú Principal");
             System.out.println();
 
@@ -59,6 +59,10 @@ public class TeacherController {
             } else {
                 ConsoleHelper.printError("Error al registrar el profesor.");
             }
+        } catch (IllegalArgumentException e) {
+            ConsoleHelper.printError("Validación de campo fallida: " + e.getMessage());
+        } catch (IllegalStateException e) {
+            ConsoleHelper.printError(e.getMessage());
         } catch (Exception e) {
             ConsoleHelper.printError("Error al registrar el profesor: " + e.getMessage());
         }
@@ -91,11 +95,19 @@ public class TeacherController {
         int year = ConsoleInputReader.readInt("Año académico: ", 2020, 2030);
         String section = ConsoleInputReader.readOptionalString("Sección / Grupo (ej: A, B): ");
 
-        boolean ok = academicService.assignTeacherToSubject(teacherId, subjectId, year, section.isEmpty() ? "A" : section);
-        if (ok) {
-            ConsoleHelper.printSuccess("Asignación académica registrada exitosamente.");
-        } else {
-            ConsoleHelper.printError("Error al registrar la asignación.");
+        try {
+            boolean ok = academicService.assignTeacherToSubject(teacherId, subjectId, year, section.isEmpty() ? "A" : section);
+            if (ok) {
+                ConsoleHelper.printSuccess("Asignación académica registrada exitosamente.");
+            } else {
+                ConsoleHelper.printError("Error al registrar la asignación.");
+            }
+        } catch (IllegalArgumentException e) {
+            ConsoleHelper.printError("Validación fallida: " + e.getMessage());
+        } catch (IllegalStateException e) {
+            ConsoleHelper.printError(e.getMessage());
+        } catch (Exception e) {
+            ConsoleHelper.printError("Error inesperado en asignación: " + e.getMessage());
         }
         ConsoleInputReader.waitForEnter();
     }
