@@ -38,10 +38,6 @@ public class InvoiceTxtService {
         }
     }
 
-    /**
-     * Genera la representación en texto plano estructurado de la factura electrónica,
-     * altamente legible para agentes de IA, terminales de consola y sistemas automatizados.
-     */
     public String generateTxtContent(String invoiceNumber, LocalDate issueDate, String cufe,
                                      Student student, Guardian guardian, PaymentConcept concept,
                                      Payment payment, TaxBreakdown tax) {
@@ -129,9 +125,6 @@ public class InvoiceTxtService {
         return sb.toString();
     }
 
-    /**
-     * Escribe el archivo .txt en el sistema de archivos.
-     */
     public boolean writeTxtFile(String filePath, String content) {
         try {
             ensureDirectoryExists();
