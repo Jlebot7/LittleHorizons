@@ -12,7 +12,7 @@ import java.sql.*;
 import java.sql.Date;
 import java.util.*;
 
-public class PaymentDAO {
+public class PaymentDAO implements PaymentRepository {
 
     public Integer savePayment(Payment payment) {
         String sql = "INSERT INTO pagos (id_estudiante, id_acudiente, id_concepto, monto_pagado, fecha_pago, " +

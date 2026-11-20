@@ -2,31 +2,39 @@ package com.littlehorizons.erp.service;
 
 import com.littlehorizons.erp.dao.academic.*;
 import com.littlehorizons.erp.model.academic.*;
-import com.littlehorizons.erp.util.LoggerUtil;
 import com.littlehorizons.erp.util.ValidationUtil;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class AcademicService {
+public class AcademicService implements IAcademicService {
 
-    private final StudentDAO studentDAO;
-    private final GuardianDAO guardianDAO;
-    private final TeacherDAO teacherDAO;
-    private final SubjectDAO subjectDAO;
-    private final AcademicRecordDAO academicRecordDAO;
-    private final AttendanceDAO attendanceDAO;
+    private final StudentRepository studentDAO;
+    private final GuardianRepository guardianDAO;
+    private final TeacherRepository teacherDAO;
+    private final SubjectRepository subjectDAO;
+    private final AcademicRecordRepository academicRecordDAO;
+    private final AttendanceRepository attendanceDAO;
 
     public AcademicService() {
-        this.studentDAO = new StudentDAO();
-        this.guardianDAO = new GuardianDAO();
-        this.teacherDAO = new TeacherDAO();
-        this.subjectDAO = new SubjectDAO();
-        this.academicRecordDAO = new AcademicRecordDAO();
-        this.attendanceDAO = new AttendanceDAO();
+        this(new StudentDAO(), new GuardianDAO(), new TeacherDAO(),
+                new SubjectDAO(), new AcademicRecordDAO(), new AttendanceDAO());
+    }
+
+    public AcademicService(StudentRepository studentDAO,
+                           GuardianRepository guardianDAO,
+                           TeacherRepository teacherDAO,
+                           SubjectRepository subjectDAO,
+                           AcademicRecordRepository academicRecordDAO,
+                           AttendanceRepository attendanceDAO) {
+        this.studentDAO = studentDAO;
+        this.guardianDAO = guardianDAO;
+        this.teacherDAO = teacherDAO;
+        this.subjectDAO = subjectDAO;
+        this.academicRecordDAO = academicRecordDAO;
+        this.attendanceDAO = attendanceDAO;
     }
 
     private void validateStudent(Student student) {
@@ -128,78 +136,96 @@ public class AcademicService {
         }
     }
 
+    @Override
     public Integer registerStudent(Student student) {
         validateStudent(student);
         return studentDAO.save(student);
     }
 
+    @Override
     public boolean updateStudent(Student student) {
         validateStudent(student);
         return studentDAO.update(student);
     }
 
+    @Override
     public Optional<Student> getStudentById(int id) {
         return studentDAO.findById(id);
     }
 
+    @Override
     public Optional<Student> getStudentByDocument(String docNumber) {
         return studentDAO.findByDocument(docNumber);
     }
 
+    @Override
     public List<Student> getAllStudents() {
         return studentDAO.findAll();
     }
 
+    @Override
     public Integer registerGuardian(Guardian guardian) {
         validateGuardian(guardian);
         return guardianDAO.save(guardian);
     }
 
+    @Override
     public List<Guardian> getAllGuardians() {
         return guardianDAO.findAll();
     }
 
+    @Override
     public boolean linkStudentToGuardian(int studentId, int guardianId, boolean isPrimary, boolean isEmergency) {
         return studentDAO.associateGuardian(studentId, guardianId, isPrimary, isEmergency);
     }
 
+    @Override
     public boolean enrollStudentInGrade(int studentId, int gradeId, int year) {
         return studentDAO.enrollInGrade(studentId, gradeId, year);
     }
 
+    @Override
     public Integer registerTeacher(Teacher teacher) {
         validateTeacher(teacher);
         return teacherDAO.save(teacher);
     }
 
+    @Override
     public List<Teacher> getAllTeachers() {
         return teacherDAO.findAll();
     }
 
+    @Override
     public Integer registerSubject(Subject subject) {
         return subjectDAO.save(subject);
     }
 
+    @Override
     public List<Subject> getAllSubjects() {
         return subjectDAO.findAll();
     }
 
+    @Override
     public List<Subject> getSubjectsByGrade(int gradeId) {
         return subjectDAO.findByGrade(gradeId);
     }
 
+    @Override
     public List<AcademicGrade> getAllGrades() {
         return subjectDAO.findAllGrades();
     }
 
+    @Override
     public boolean assignTeacherToSubject(int teacherId, int subjectId, int year, String section) {
         return teacherDAO.assignToSubject(teacherId, subjectId, year, section);
     }
 
+    @Override
     public boolean enrollStudentInSubject(int studentId, int subjectId, int year, String period, String section) {
         return subjectDAO.enrollStudent(studentId, subjectId, year, period, section);
     }
 
+    @Override
     public boolean recordGrade(AcademicRecord record) {
         if (!ValidationUtil.isValidGrade(record.getGradeValue())) {
             throw new IllegalArgumentException("La nota debe estar entre 0.0 y 5.0 según el estándar colombiano.");
@@ -207,10 +233,12 @@ public class AcademicService {
         return academicRecordDAO.saveOrUpdate(record);
     }
 
+    @Override
     public List<AcademicRecord> getAcademicHistory(int studentId) {
         return academicRecordDAO.findByStudent(studentId);
     }
 
+    @Override
     public BigDecimal calculateStudentPeriodAverage(int studentId, int year, String period) {
         List<AcademicRecord> records = academicRecordDAO.findByStudent(studentId);
 
@@ -227,6 +255,7 @@ public class AcademicService {
                 .orElse(BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP));
     }
 
+    @Override
     public BigDecimal calculateSubjectCourseAverage(int subjectId, int year, String period) {
         List<AcademicRecord> records = academicRecordDAO.findBySubjectAndPeriod(subjectId, year, period);
 
@@ -242,14 +271,17 @@ public class AcademicService {
                 .orElse(BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP));
     }
 
+    @Override
     public boolean registerAttendance(Attendance attendance) {
         return attendanceDAO.recordAttendance(attendance);
     }
 
+    @Override
     public List<Attendance> getStudentAttendance(int studentId) {
         return attendanceDAO.findByStudent(studentId);
     }
 
+    @Override
     public Map<Integer, Long> getStudentsWithExcessiveAbsences(long threshold) {
         List<Attendance> allRecent = attendanceDAO.findAllRecent();
 
@@ -259,5 +291,56 @@ public class AcademicService {
                 .entrySet().stream()
                 .filter(entry -> entry.getValue() >= threshold)
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+    }
+
+    @Override
+    public List<Student> getHonorRoll(int year, String period, double minAverage) {
+        List<Student> allStudents = studentDAO.findAll();
+        return allStudents.stream()
+                .filter(s -> "Activo".equalsIgnoreCase(s.getStatus()))
+                .filter(s -> calculateStudentPeriodAverage(s.getIdStudent(), year, period).doubleValue() >= minAverage)
+                .sorted(Comparator.comparingDouble((Student s) -> calculateStudentPeriodAverage(s.getIdStudent(), year, period).doubleValue()).reversed())
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public Map<String, Long> getGradeDistribution(int subjectId, int year, String period) {
+        List<AcademicRecord> records = academicRecordDAO.findBySubjectAndPeriod(subjectId, year, period);
+        return records.stream()
+                .filter(r -> r.getGradeValue() != null)
+                .collect(Collectors.groupingBy(r -> {
+                    double val = r.getGradeValue().doubleValue();
+                    if (val >= 4.6) return "Sobresaliente";
+                    if (val >= 4.0) return "Alto";
+                    if (val >= 3.0) return "Básico";
+                    return "Bajo";
+                }, Collectors.counting()));
+    }
+
+    @Override
+    public DoubleSummaryStatistics getSubjectPerformanceStatistics(int subjectId, int year, String period) {
+        List<AcademicRecord> records = academicRecordDAO.findBySubjectAndPeriod(subjectId, year, period);
+        return records.stream()
+                .map(AcademicRecord::getGradeValue)
+                .filter(Objects::nonNull)
+                .mapToDouble(BigDecimal::doubleValue)
+                .summaryStatistics();
+    }
+
+    @Override
+    public Map<Integer, Long> getTeacherAssignedSubjectsCount(int year) {
+        List<Subject> allSubjects = subjectDAO.findAll();
+        return allSubjects.stream()
+                .filter(s -> s.getIdGrade() != null)
+                .collect(Collectors.groupingBy(Subject::getIdGrade, Collectors.counting()));
+    }
+
+    @Override
+    public Map<Boolean, List<Student>> partitionStudentsByPerformance(int year, String period, BigDecimal threshold) {
+        List<Student> allStudents = studentDAO.findAll();
+        return allStudents.stream()
+                .filter(s -> "Activo".equalsIgnoreCase(s.getStatus()))
+                .collect(Collectors.partitioningBy(s ->
+                        calculateStudentPeriodAverage(s.getIdStudent(), year, period).compareTo(threshold) >= 0));
     }
 }

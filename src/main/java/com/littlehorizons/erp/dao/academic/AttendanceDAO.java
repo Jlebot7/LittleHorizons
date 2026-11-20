@@ -9,7 +9,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
-public class AttendanceDAO {
+public class AttendanceDAO implements AttendanceRepository {
 
     public boolean recordAttendance(Attendance attendance) {
         String sql = "INSERT INTO asistencias (id_estudiante, id_materia, fecha_asistencia, estado_asistencia, observaciones, registrado_por) " +

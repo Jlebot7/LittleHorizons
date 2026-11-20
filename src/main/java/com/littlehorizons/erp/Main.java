@@ -1,6 +1,7 @@
 package com.littlehorizons.erp;
 
 import com.littlehorizons.erp.util.LoggerUtil;
+import com.littlehorizons.erp.view.IMainMenuView;
 import com.littlehorizons.erp.view.MainMenuView;
 
 public class Main {
@@ -8,7 +9,7 @@ public class Main {
     public static void main(String[] args) {
         LoggerUtil.info("Starting Little Horizons ERP Educational Management System...");
         try {
-            MainMenuView mainMenuView = new MainMenuView();
+            IMainMenuView mainMenuView = new MainMenuView();
             mainMenuView.start();
         } catch (Exception e) {
             LoggerUtil.error("Uncaught exception in application main thread", e);

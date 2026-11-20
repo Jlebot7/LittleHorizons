@@ -1,31 +1,32 @@
 package com.littlehorizons.erp.controller;
 
 import com.littlehorizons.erp.model.academic.Teacher;
-import com.littlehorizons.erp.service.AcademicService;
+import com.littlehorizons.erp.service.IAcademicService;
 import com.littlehorizons.erp.util.ConsoleInputReader;
-import com.littlehorizons.erp.view.ConsoleHelper;
+import com.littlehorizons.erp.view.ITeacherView;
+import com.littlehorizons.erp.view.TeacherConsoleView;
 
 import java.time.LocalDate;
 import java.util.List;
 
 public class TeacherController {
 
-    private final AcademicService academicService;
+    private final IAcademicService academicService;
+    private final ITeacherView teacherView;
 
-    public TeacherController(AcademicService academicService) {
+    public TeacherController(IAcademicService academicService) {
+        this(academicService, new TeacherConsoleView());
+    }
+
+    public TeacherController(IAcademicService academicService, ITeacherView teacherView) {
         this.academicService = academicService;
+        this.teacherView = teacherView;
     }
 
     public void run() {
         boolean back = false;
         while (!back) {
-            ConsoleHelper.printHeader("GESTIÓN DE PROFESORES Y CARGA ACADÉMICA", "Colegio Little Horizons");
-            System.out.println("1. Registrar nuevo profesor");
-            System.out.println("2. Directorio general de profesores");
-            System.out.println("3. Asignar carga académica (Materia a profesor)");
-            System.out.println("0. Regresar al Menú Principal");
-            System.out.println();
-
+            teacherView.showMenu();
             int option = ConsoleInputReader.readInt("Seleccione una opción: ", 0, 3);
             switch (option) {
                 case 1 -> registerTeacher();
@@ -37,7 +38,7 @@ public class TeacherController {
     }
 
     private void registerTeacher() {
-        ConsoleHelper.printSubHeader("REGISTRO DE PROFESOR");
+        teacherView.showRegisterTeacherHeader();
         String docType = ConsoleInputReader.readAdultDocumentType("Tipo de documento (CC/CE/Pasaporte/PPT/PEP/VISA): ");
         String docNum = ConsoleInputReader.readDocumentNumber("Número de documento: ", docType);
         String fName = ConsoleInputReader.readPersonName("Primer nombre: ");
@@ -55,41 +56,28 @@ public class TeacherController {
         try {
             Integer id = academicService.registerTeacher(t);
             if (id != null) {
-                ConsoleHelper.printSuccess("Profesor registrado exitosamente con ID: " + id);
+                teacherView.showSuccess("Profesor registrado exitosamente con ID: " + id);
             } else {
-                ConsoleHelper.printError("Error al registrar el profesor.");
+                teacherView.showError("Error al registrar el profesor.");
             }
         } catch (IllegalArgumentException e) {
-            ConsoleHelper.printError("Validación de campo fallida: " + e.getMessage());
+            teacherView.showError("Validación de campo fallida: " + e.getMessage());
         } catch (IllegalStateException e) {
-            ConsoleHelper.printError(e.getMessage());
+            teacherView.showError(e.getMessage());
         } catch (Exception e) {
-            ConsoleHelper.printError("Error al registrar el profesor: " + e.getMessage());
+            teacherView.showError("Error al registrar el profesor: " + e.getMessage());
         }
         ConsoleInputReader.waitForEnter();
     }
 
     private void listTeachers() {
-        ConsoleHelper.printSubHeader("DIRECTORIO GENERAL DE PROFESORES");
         List<Teacher> teachers = academicService.getAllTeachers();
-        if (teachers.isEmpty()) {
-            ConsoleHelper.printWarning("No hay profesores registrados.");
-        } else {
-            System.out.printf("%-5s | %-12s | %-28s | %-30s | %-25s%n", "ID", "DOCUMENTO", "NOMBRE COMPLETO", "ESPECIALIZACIÓN", "CORREO");
-            System.out.println("─".repeat(110));
-            for (Teacher t : teachers) {
-                System.out.printf("%-5d | %-4s %-7s | %-28s | %-30s | %-25s%n",
-                        t.getIdTeacher(), t.getDocumentType(), t.getDocumentNumber(),
-                        t.getFullName(), t.getSpecialization(), t.getEmail());
-            }
-            System.out.println("─".repeat(110));
-            System.out.println("Total de docentes activos: " + teachers.size());
-        }
+        teacherView.showTeachers(teachers);
         ConsoleInputReader.waitForEnter();
     }
 
     private void assignSubjectToTeacher() {
-        ConsoleHelper.printSubHeader("ASIGNACIÓN DE CARGA ACADÉMICA");
+        teacherView.showAssignSubjectHeader();
         int teacherId = ConsoleInputReader.readInt("ID del profesor: ", 1, 99999);
         int subjectId = ConsoleInputReader.readInt("ID de la materia a asignar: ", 1, 99999);
         int year = ConsoleInputReader.readInt("Año académico: ", 2020, 2030);
@@ -98,16 +86,16 @@ public class TeacherController {
         try {
             boolean ok = academicService.assignTeacherToSubject(teacherId, subjectId, year, section.isEmpty() ? "A" : section);
             if (ok) {
-                ConsoleHelper.printSuccess("Asignación académica registrada exitosamente.");
+                teacherView.showSuccess("Asignación académica registrada exitosamente.");
             } else {
-                ConsoleHelper.printError("Error al registrar la asignación.");
+                teacherView.showError("Error al registrar la asignación.");
             }
         } catch (IllegalArgumentException e) {
-            ConsoleHelper.printError("Validación fallida: " + e.getMessage());
+            teacherView.showError("Validación fallida: " + e.getMessage());
         } catch (IllegalStateException e) {
-            ConsoleHelper.printError(e.getMessage());
+            teacherView.showError(e.getMessage());
         } catch (Exception e) {
-            ConsoleHelper.printError("Error inesperado en asignación: " + e.getMessage());
+            teacherView.showError("Error inesperado en asignación: " + e.getMessage());
         }
         ConsoleInputReader.waitForEnter();
     }

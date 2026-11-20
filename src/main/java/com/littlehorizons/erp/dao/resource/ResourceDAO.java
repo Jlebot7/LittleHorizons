@@ -13,7 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-public class ResourceDAO {
+public class ResourceDAO implements ResourceRepository {
 
     public Integer saveResource(Resource resource) {
         String sql = "INSERT INTO recursos (codigo_recurso, nombre_recurso, id_categoria, descripcion, " +

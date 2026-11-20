@@ -4,7 +4,8 @@ import com.littlehorizons.erp.config.DatabaseConfig;
 import com.littlehorizons.erp.controller.*;
 import com.littlehorizons.erp.service.*;
 import com.littlehorizons.erp.util.ConsoleInputReader;
-public class MainMenuView {
+
+public class MainMenuView implements IMainMenuView {
 
     private final StudentController studentController;
     private final AcademicController academicController;
@@ -15,20 +16,22 @@ public class MainMenuView {
     private final ReportsController reportsController;
 
     public MainMenuView() {
-        AcademicService academicService = new AcademicService();
-        ExtracurricularService extracurricularService = new ExtracurricularService();
-        FinanceService financeService = new FinanceService();
-        ResourceService resourceService = new ResourceService();
+        IAcademicService academicService = new AcademicService();
+        IExtracurricularService extracurricularService = new ExtracurricularService();
+        IFinanceService financeService = new FinanceService();
+        IResourceService resourceService = new ResourceService();
+        IReportsService reportsService = new ReportsService(academicService, extracurricularService, financeService, resourceService);
 
-        this.studentController = new StudentController(academicService);
-        this.academicController = new AcademicController(academicService);
-        this.teacherController = new TeacherController(academicService);
-        this.extracurricularController = new ExtracurricularController(extracurricularService);
-        this.financeController = new FinanceController(financeService);
-        this.resourceController = new ResourceController(resourceService);
-        this.reportsController = new ReportsController(academicService, extracurricularService, financeService, resourceService);
+        this.studentController = new StudentController(academicService, new StudentConsoleView());
+        this.academicController = new AcademicController(academicService, new AcademicConsoleView());
+        this.teacherController = new TeacherController(academicService, new TeacherConsoleView());
+        this.extracurricularController = new ExtracurricularController(extracurricularService, new ExtracurricularConsoleView());
+        this.financeController = new FinanceController(financeService, new FinanceConsoleView());
+        this.resourceController = new ResourceController(resourceService, new ResourceConsoleView());
+        this.reportsController = new ReportsController(reportsService, new ReportsConsoleView());
     }
 
+    @Override
     public void start() {
         boolean exit = false;
         while (!exit) {

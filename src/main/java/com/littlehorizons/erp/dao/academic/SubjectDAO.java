@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-public class SubjectDAO {
+public class SubjectDAO implements SubjectRepository {
 
     public Integer save(Subject subject) {
         String sql = "INSERT INTO materias (codigo_materia, nombre_materia, descripcion, id_grado, horas_semanales, esta_activa) " +

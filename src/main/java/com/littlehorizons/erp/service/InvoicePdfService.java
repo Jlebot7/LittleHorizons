@@ -5,14 +5,18 @@ import com.google.zxing.client.j2se.MatrixToImageWriter;
 import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.QRCodeWriter;
 import com.littlehorizons.erp.dao.academic.GuardianDAO;
+import com.littlehorizons.erp.dao.academic.GuardianRepository;
 import com.littlehorizons.erp.dao.academic.StudentDAO;
+import com.littlehorizons.erp.dao.academic.StudentRepository;
 import com.littlehorizons.erp.dao.finance.PaymentDAO;
+import com.littlehorizons.erp.dao.finance.PaymentRepository;
 import com.littlehorizons.erp.model.academic.Guardian;
 import com.littlehorizons.erp.model.academic.Student;
 import com.littlehorizons.erp.model.finance.Invoice;
 import com.littlehorizons.erp.model.finance.Payment;
 import com.littlehorizons.erp.model.finance.PaymentConcept;
 import com.littlehorizons.erp.util.CufeGenerator;
+import com.littlehorizons.erp.util.InvoiceContextResolver;
 import com.littlehorizons.erp.util.LoggerUtil;
 import com.littlehorizons.erp.util.TaxCalculator;
 import com.littlehorizons.erp.util.TaxCalculator.TaxBreakdown;
@@ -44,18 +48,27 @@ public class InvoicePdfService {
     private static final String SCHOOL_EMAIL = "facturacion@littlehorizons.edu.co";
     private static final String DIAN_RESOLUTION = "Resolución de Facturación Electrónica DIAN No. 18764000129845 de 2024-01-10 (Rango LH-0001 al LH-9999)";
 
-    private final PaymentDAO paymentDAO;
-    private final StudentDAO studentDAO;
-    private final GuardianDAO guardianDAO;
+    private final PaymentRepository paymentDAO;
+    private final StudentRepository studentDAO;
+    private final GuardianRepository guardianDAO;
     private final InvoiceTxtService invoiceTxtService;
     private final InvoiceXmlService invoiceXmlService;
 
     public InvoicePdfService() {
-        this.paymentDAO = new PaymentDAO();
-        this.studentDAO = new StudentDAO();
-        this.guardianDAO = new GuardianDAO();
-        this.invoiceTxtService = new InvoiceTxtService();
-        this.invoiceXmlService = new InvoiceXmlService();
+        this(new PaymentDAO(), new StudentDAO(), new GuardianDAO(),
+                new InvoiceTxtService(), new InvoiceXmlService());
+    }
+
+    public InvoicePdfService(PaymentRepository paymentDAO,
+                             StudentRepository studentDAO,
+                             GuardianRepository guardianDAO,
+                             InvoiceTxtService invoiceTxtService,
+                             InvoiceXmlService invoiceXmlService) {
+        this.paymentDAO = paymentDAO;
+        this.studentDAO = studentDAO;
+        this.guardianDAO = guardianDAO;
+        this.invoiceTxtService = invoiceTxtService;
+        this.invoiceXmlService = invoiceXmlService;
         ensureDirectoryExists();
     }
 
@@ -83,51 +96,16 @@ public class InvoicePdfService {
             String invoiceNumber = String.format("FE-LH-2024-%04d", seq);
             LocalDate issueDate = payment.getPaymentDate() != null ? payment.getPaymentDate() : LocalDate.now();
 
-            Student student = null;
-            if (payment.getIdStudent() != null) {
-                try {
-                    student = studentDAO.findById(payment.getIdStudent()).orElse(null);
-                } catch (Exception ignored) {
-                }
-            }
-            if (student == null) {
-                student = new Student();
-                student.setFirstName("Estudiante");
-                student.setFirstLastName("LH");
-                student.setDocumentType("TI");
-                student.setDocumentNumber("1098000000");
-                student.setAddress("Bogotá D.C.");
-            }
+            Invoice tempInvoice = new Invoice();
+            tempInvoice.setIdPayment(payment.getIdPago());
+            tempInvoice.setAmount(payment.getAmountPaid());
 
-            Guardian guardian = null;
-            if (payment.getIdGuardian() != null) {
-                try {
-                    guardian = guardianDAO.findById(payment.getIdGuardian()).orElse(null);
-                } catch (Exception ignored) {
-                }
-            }
-            if (guardian == null) {
-                guardian = new Guardian();
-                guardian.setFirstName(student.getFirstName());
-                guardian.setFirstLastName(student.getFirstLastName());
-                guardian.setDocumentType("CC");
-                guardian.setDocumentNumber(student.getDocumentNumber());
-                guardian.setAddress(student.getAddress());
-            }
+            InvoiceContextResolver.ResolvedInvoiceContext ctx =
+                    InvoiceContextResolver.resolve(tempInvoice, paymentDAO, studentDAO, guardianDAO);
 
-            PaymentConcept concept = null;
-            if (payment.getIdConcept() != null) {
-                try {
-                    concept = paymentDAO.findConceptById(payment.getIdConcept()).orElse(null);
-                } catch (Exception ignored) {
-                }
-            }
-            if (concept == null) {
-                concept = new PaymentConcept();
-                concept.setConceptName("Servicios Educativos / Pensión");
-                concept.setConceptCode("PEN-01");
-                concept.setBaseAmount(payment.getAmountPaid());
-            }
+            Student student = ctx.student();
+            Guardian guardian = ctx.guardian();
+            PaymentConcept concept = ctx.concept();
 
             return generateInvoiceDirect(invoiceNumber, issueDate, student, guardian, concept, payment);
 
@@ -201,98 +179,96 @@ public class InvoicePdfService {
 
             invoice.setStudentName(student != null ? student.getFullName() : "Estudiante");
             invoice.setGuardianName(guardian != null ? guardian.getFullName() : "Acudiente");
-            invoice.setConceptName(concept.getConceptName());
+            invoice.setConceptName(concept != null ? concept.getConceptName() : "Servicio");
             invoice.setAmount(amountPaid);
 
             try {
                 paymentDAO.saveInvoice(invoice);
-            } catch (Exception ignored) {
+            } catch (Exception e) {
+                LoggerUtil.error("Could not persist invoice record into database (offline mode)", e);
             }
-
-            LoggerUtil.info(String.format("Generated multi-format invoice [%s]: PDF=%s, TXT=%s, XML=%s",
-                    invoiceNumber, pdfFilePath, txtFilePath, xmlFilePath));
 
             return Optional.of(invoice);
         } catch (Exception e) {
-            LoggerUtil.error("Error in generateInvoiceDirect", e);
+            LoggerUtil.error("Failed writing physical invoice files", e);
             return Optional.empty();
         }
     }
 
     private void writePdfFile(String filePath, String invoiceNumber, LocalDate issueDate, String cufe,
-                              Student student, Guardian guardian, String conceptName, Payment payment,
-                              TaxBreakdown tax, byte[] qrBytes) throws Exception {
+                              Student student, Guardian guardian, String conceptName,
+                              Payment payment, TaxBreakdown tax, byte[] qrBytes) throws Exception {
 
-        Document document = new Document(PageSize.A4, 36, 36, 36, 36);
+        Document document = new Document(PageSize.LETTER, 36, 36, 36, 36);
         PdfWriter.getInstance(document, new FileOutputStream(filePath));
         document.open();
 
-        Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 14, Color.DARK_GRAY);
-        Font subTitleFont = FontFactory.getFont(FontFactory.HELVETICA, 8, Color.GRAY);
+        Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 14, new Color(20, 50, 100));
+        Font subTitleFont = FontFactory.getFont(FontFactory.HELVETICA, 8, Color.DARK_GRAY);
         Font boldFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 9, Color.BLACK);
         Font normalFont = FontFactory.getFont(FontFactory.HELVETICA, 9, Color.BLACK);
         Font cufeFont = FontFactory.getFont(FontFactory.COURIER, 7, Color.DARK_GRAY);
 
         PdfPTable headerTable = new PdfPTable(2);
         headerTable.setWidthPercentage(100);
-        headerTable.setWidths(new float[]{65, 35});
+        headerTable.setWidths(new float[]{60, 40});
 
-        PdfPCell leftCell = new PdfPCell();
-        leftCell.setBorder(Rectangle.NO_BORDER);
-        leftCell.addElement(new Paragraph(SCHOOL_NAME, titleFont));
-        leftCell.addElement(new Paragraph("NIT: " + SCHOOL_NIT + " - Régimen Común / Responsable de IVA", boldFont));
-        leftCell.addElement(new Paragraph(SCHOOL_ADDRESS, subTitleFont));
-        leftCell.addElement(new Paragraph("Tel: " + SCHOOL_PHONE + " | " + SCHOOL_EMAIL, subTitleFont));
-        leftCell.addElement(new Paragraph(DIAN_RESOLUTION, subTitleFont));
-        headerTable.addCell(leftCell);
+        PdfPCell emitterCell = new PdfPCell();
+        emitterCell.setBorder(Rectangle.NO_BORDER);
+        emitterCell.addElement(new Paragraph(SCHOOL_NAME, titleFont));
+        emitterCell.addElement(new Paragraph("NIT: " + SCHOOL_NIT + " - Régimen Común", boldFont));
+        emitterCell.addElement(new Paragraph(SCHOOL_ADDRESS, subTitleFont));
+        emitterCell.addElement(new Paragraph("Tel: " + SCHOOL_PHONE + " | " + SCHOOL_EMAIL, subTitleFont));
+        emitterCell.addElement(new Paragraph(DIAN_RESOLUTION, subTitleFont));
+        headerTable.addCell(emitterCell);
 
-        PdfPCell rightCell = new PdfPCell();
-        rightCell.setBorder(Rectangle.BOX);
-        rightCell.setBackgroundColor(new Color(245, 247, 250));
-        rightCell.setHorizontalAlignment(Element.ALIGN_CENTER);
-        rightCell.addElement(new Paragraph("FACTURA ELECTRÓNICA DE VENTA", boldFont));
-        rightCell.addElement(new Paragraph(invoiceNumber, FontFactory.getFont(FontFactory.HELVETICA_BOLD, 12, Color.RED)));
-        rightCell.addElement(new Paragraph("Fecha de Emisión: " + issueDate.format(DateTimeFormatter.ISO_LOCAL_DATE), normalFont));
-        rightCell.addElement(new Paragraph("Recibo No: " + (payment != null && payment.getReceiptNumber() != null ? payment.getReceiptNumber() : "REC-2024-001"), subTitleFont));
-        rightCell.addElement(new Paragraph("Método: " + (payment != null && payment.getPaymentMethod() != null ? payment.getPaymentMethod() : "Transferencia"), subTitleFont));
-        headerTable.addCell(rightCell);
+        PdfPCell invoiceBoxCell = new PdfPCell();
+        invoiceBoxCell.setBorder(Rectangle.BOX);
+        invoiceBoxCell.setBackgroundColor(new Color(245, 247, 250));
+        invoiceBoxCell.setPadding(8);
+        invoiceBoxCell.addElement(new Paragraph("FACTURA ELECTRÓNICA DE VENTA", boldFont));
+        invoiceBoxCell.addElement(new Paragraph("No: " + invoiceNumber, FontFactory.getFont(FontFactory.HELVETICA_BOLD, 12, Color.RED)));
+        invoiceBoxCell.addElement(new Paragraph("Fecha de Emisión: " + issueDate.format(DateTimeFormatter.ISO_LOCAL_DATE), normalFont));
+        invoiceBoxCell.addElement(new Paragraph("Forma de Pago: " + (payment != null && payment.getPaymentMethod() != null ? payment.getPaymentMethod() : "Efectivo"), normalFont));
+        headerTable.addCell(invoiceBoxCell);
 
         document.add(headerTable);
         document.add(new Paragraph(" "));
 
-        PdfPTable clientTable = new PdfPTable(2);
-        clientTable.setWidthPercentage(100);
-        clientTable.setWidths(new float[]{50, 50});
+        PdfPTable partiesTable = new PdfPTable(2);
+        partiesTable.setWidthPercentage(100);
+        partiesTable.setWidths(new float[]{50, 50});
 
-        PdfPCell c1 = new PdfPCell();
-        c1.setBackgroundColor(new Color(250, 250, 250));
-        c1.addElement(new Paragraph("DATOS DEL ADQUIRENTE / ACUDIENTE (ART. 617 E.T.)", boldFont));
-        c1.addElement(new Paragraph("Nombre: " + (guardian != null && guardian.getFullName() != null ? guardian.getFullName() : "Acudiente General"), normalFont));
-        c1.addElement(new Paragraph("Documento: " + (guardian != null && guardian.getDocumentType() != null ? guardian.getDocumentType() : "CC") + " " + (guardian != null && guardian.getDocumentNumber() != null ? guardian.getDocumentNumber() : "N/A"), normalFont));
-        c1.addElement(new Paragraph("Teléfono: " + (guardian != null && guardian.getMainPhone() != null ? guardian.getMainPhone() : "N/A"), normalFont));
-        c1.addElement(new Paragraph("Dirección: " + (guardian != null && guardian.getAddress() != null ? guardian.getAddress() : "Bogotá D.C."), normalFont));
-        clientTable.addCell(c1);
+        PdfPCell guardianCell = new PdfPCell();
+        guardianCell.setBorder(Rectangle.BOX);
+        guardianCell.setPadding(6);
+        guardianCell.addElement(new Paragraph("DATOS DEL ADQUIRENTE / ACUDIENTE:", boldFont));
+        guardianCell.addElement(new Paragraph("Nombre: " + (guardian != null ? guardian.getFullName() : "N/A"), normalFont));
+        guardianCell.addElement(new Paragraph("Documento: " + (guardian != null ? guardian.getDocumentType() + " " + guardian.getDocumentNumber() : "N/A"), normalFont));
+        guardianCell.addElement(new Paragraph("Dirección: " + (guardian != null && guardian.getAddress() != null ? guardian.getAddress() : "Bogotá D.C."), normalFont));
+        guardianCell.addElement(new Paragraph("Teléfono: " + (guardian != null && guardian.getMainPhone() != null ? guardian.getMainPhone() : "N/A"), normalFont));
+        partiesTable.addCell(guardianCell);
 
-        PdfPCell c2 = new PdfPCell();
-        c2.setBackgroundColor(new Color(250, 250, 250));
-        c2.addElement(new Paragraph("DATOS DEL BENEFICIARIO (ESTUDIANTE)", boldFont));
-        c2.addElement(new Paragraph("Estudiante: " + (student != null && student.getFullName() != null ? student.getFullName() : "Estudiante Little Horizons"), normalFont));
-        c2.addElement(new Paragraph("Documento: " + (student != null && student.getDocumentType() != null ? student.getDocumentType() : "TI") + " " + (student != null && student.getDocumentNumber() != null ? student.getDocumentNumber() : "N/A"), normalFont));
-        c2.addElement(new Paragraph("Año Académico: " + (payment != null && payment.getAcademicYear() != null ? payment.getAcademicYear() : 2024), normalFont));
-        c2.addElement(new Paragraph("Período: " + (payment != null && payment.getAcademicPeriod() != null ? payment.getAcademicPeriod() : "I"), normalFont));
-        clientTable.addCell(c2);
+        PdfPCell studentCell = new PdfPCell();
+        studentCell.setBorder(Rectangle.BOX);
+        studentCell.setPadding(6);
+        studentCell.addElement(new Paragraph("BENEFICIARIO DEL SERVICIO (ESTUDIANTE):", boldFont));
+        studentCell.addElement(new Paragraph("Nombre: " + (student != null ? student.getFullName() : "N/A"), normalFont));
+        studentCell.addElement(new Paragraph("Documento: " + (student != null ? student.getDocumentType() + " " + student.getDocumentNumber() : "N/A"), normalFont));
+        studentCell.addElement(new Paragraph("Código LH: STU-" + (student != null && student.getIdStudent() != null ? student.getIdStudent() : "001"), normalFont));
+        partiesTable.addCell(studentCell);
 
-        document.add(clientTable);
+        document.add(partiesTable);
         document.add(new Paragraph(" "));
 
         PdfPTable itemsTable = new PdfPTable(5);
         itemsTable.setWidthPercentage(100);
         itemsTable.setWidths(new float[]{8, 47, 10, 17, 18});
 
-        String[] headers = {"Ítem", "Descripción del Concepto", "Cant.", "Valor Base Unit.", "Subtotal Base"};
+        String[] headers = {"ÍTEM", "DESCRIPCIÓN DEL CONCEPTO", "CANT", "VALOR UNIT.", "SUBTOTAL"};
         for (String h : headers) {
-            PdfPCell cell = new PdfPCell(new Phrase(h, FontFactory.getFont(FontFactory.HELVETICA_BOLD, 9, Color.WHITE)));
-            cell.setBackgroundColor(new Color(33, 60, 115));
+            PdfPCell cell = new PdfPCell(new Phrase(h, boldFont));
+            cell.setBackgroundColor(new Color(220, 230, 242));
             cell.setHorizontalAlignment(Element.ALIGN_CENTER);
             itemsTable.addCell(cell);
         }

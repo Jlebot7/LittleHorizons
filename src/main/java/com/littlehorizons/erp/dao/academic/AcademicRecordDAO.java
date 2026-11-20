@@ -8,7 +8,7 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class AcademicRecordDAO {
+public class AcademicRecordDAO implements AcademicRecordRepository {
 
     public boolean saveOrUpdate(AcademicRecord record) {
         String sql = "INSERT INTO registros_academicos (id_estudiante, id_materia, id_profesor, " +

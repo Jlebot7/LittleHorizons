@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-public class GuardianDAO {
+public class GuardianDAO implements GuardianRepository {
 
     public Integer save(Guardian guardian) {
         String sql = "INSERT INTO acudientes (tipo_documento, numero_documento, primer_nombre, segundo_nombre, " +

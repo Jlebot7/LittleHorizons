@@ -3,9 +3,10 @@ package com.littlehorizons.erp.controller;
 import com.littlehorizons.erp.model.academic.AcademicGrade;
 import com.littlehorizons.erp.model.academic.Guardian;
 import com.littlehorizons.erp.model.academic.Student;
-import com.littlehorizons.erp.service.AcademicService;
+import com.littlehorizons.erp.service.IAcademicService;
 import com.littlehorizons.erp.util.ConsoleInputReader;
-import com.littlehorizons.erp.view.ConsoleHelper;
+import com.littlehorizons.erp.view.IStudentView;
+import com.littlehorizons.erp.view.StudentConsoleView;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -13,24 +14,22 @@ import java.util.Optional;
 
 public class StudentController {
 
-    private final AcademicService academicService;
+    private final IAcademicService academicService;
+    private final IStudentView studentView;
 
-    public StudentController(AcademicService academicService) {
+    public StudentController(IAcademicService academicService) {
+        this(academicService, new StudentConsoleView());
+    }
+
+    public StudentController(IAcademicService academicService, IStudentView studentView) {
         this.academicService = academicService;
+        this.studentView = studentView;
     }
 
     public void run() {
         boolean back = false;
         while (!back) {
-            ConsoleHelper.printHeader("GESTIÓN DE ESTUDIANTES Y ACUDIENTES", "Colegio Little Horizons");
-            System.out.println("1. Registrar nuevo estudiante");
-            System.out.println("2. Listar todos los estudiantes");
-            System.out.println("3. Consultar estudiante por número de documento");
-            System.out.println("4. Registrar acudiente y vincular a estudiante");
-            System.out.println("5. Matricular estudiante en un grado");
-            System.out.println("0. Regresar al Menú Principal");
-            System.out.println();
-
+            studentView.showMenu();
             int option = ConsoleInputReader.readInt("Seleccione una opción: ", 0, 5);
             switch (option) {
                 case 1 -> registerNewStudent();
@@ -44,7 +43,7 @@ public class StudentController {
     }
 
     private void registerNewStudent() {
-        ConsoleHelper.printSubHeader("REGISTRO DE NUEVO ESTUDIANTE");
+        studentView.showRegisterStudentHeader();
 
         String docType = ConsoleInputReader.readStudentDocumentType("Tipo de documento (RC/TI/CC/CE/Pasaporte/PPT/PEP/NES/VISA): ");
         String docNumber = ConsoleInputReader.readDocumentNumber("Número de documento: ", docType);
@@ -68,78 +67,50 @@ public class StudentController {
         try {
             Integer id = academicService.registerStudent(student);
             if (id != null) {
-                ConsoleHelper.printSuccess("Estudiante registrado exitosamente con ID interno: " + id);
+                studentView.showSuccess("Estudiante registrado exitosamente con ID interno: " + id);
             } else {
-                ConsoleHelper.printError("No se pudo completar el registro del estudiante en el sistema.");
+                studentView.showError("No se pudo completar el registro del estudiante en el sistema.");
             }
         } catch (IllegalArgumentException e) {
-            ConsoleHelper.printError("Validación de campo fallida: " + e.getMessage());
+            studentView.showError("Validación de campo fallida: " + e.getMessage());
         } catch (IllegalStateException e) {
-            ConsoleHelper.printError(e.getMessage());
+            studentView.showError(e.getMessage());
         } catch (Exception e) {
-            ConsoleHelper.printError("Error inesperado al registrar el estudiante: " + e.getMessage());
+            studentView.showError("Error inesperado al registrar el estudiante: " + e.getMessage());
         }
         ConsoleInputReader.waitForEnter();
     }
 
     private void listStudents() {
-        ConsoleHelper.printSubHeader("DIRECTORIO GENERAL DE ESTUDIANTES");
         List<Student> students = academicService.getAllStudents();
-        if (students.isEmpty()) {
-            ConsoleHelper.printWarning("No hay estudiantes registrados en la base de datos.");
-        } else {
-            System.out.printf("%-6s | %-12s | %-30s | %-12s | %-10s%n", "ID", "DOCUMENTO", "NOMBRE COMPLETO", "TELÉFONO", "ESTADO");
-            System.out.println("─".repeat(80));
-            for (Student s : students) {
-                System.out.printf("%-6d | %-4s %-7s | %-30s | %-12s | %-10s%n",
-                        s.getIdStudent(), s.getDocumentType(), s.getDocumentNumber(),
-                        s.getFullName(), s.getPhone() != null ? s.getPhone() : "N/A", s.getStatus());
-            }
-            System.out.println("─".repeat(80));
-            System.out.println("Total de estudiantes listados: " + students.size());
-        }
+        studentView.showStudents(students);
         ConsoleInputReader.waitForEnter();
     }
 
     private void searchStudent() {
-        ConsoleHelper.printSubHeader("CONSULTA DE ESTUDIANTE");
+        studentView.showSearchStudentHeader();
         String docNumber = ConsoleInputReader.readString("Ingrese el número de documento a buscar: ");
         Optional<Student> studentOpt = academicService.getStudentByDocument(docNumber);
 
         if (studentOpt.isPresent()) {
-            Student s = studentOpt.get();
-            System.out.println("\n  Información del Estudiante:");
-            System.out.println("  ---------------------------");
-            System.out.println("  ID Interno        : " + s.getIdStudent());
-            System.out.println("  Nombre Completo   : " + s.getFullName());
-            System.out.println("  Documento         : " + s.getDocumentType() + " " + s.getDocumentNumber());
-            System.out.println("  Fecha Nacimiento  : " + s.getBirthDate());
-            System.out.println("  Género            : " + s.getGender());
-            System.out.println("  Dirección         : " + s.getAddress());
-            System.out.println("  Teléfono          : " + s.getPhone());
-            System.out.println("  Correo Electrónico: " + s.getEmail());
-            System.out.println("  Tipo de Sangre    : " + s.getBloodType());
-            System.out.println("  Alergias          : " + (s.getAllergies() != null ? s.getAllergies() : "Ninguna"));
-            System.out.println("  Condiciones Méd.  : " + (s.getMedicalConditions() != null ? s.getMedicalConditions() : "Ninguna"));
-            System.out.println("  Fecha de Ingreso  : " + s.getAdmissionDate());
-            System.out.println("  Estado Actual     : " + s.getStatus());
+            studentView.showStudentDetails(studentOpt.get());
         } else {
-            ConsoleHelper.printWarning("No se encontró ningún estudiante con el documento: " + docNumber);
+            studentView.showStudentNotFound(docNumber);
         }
         ConsoleInputReader.waitForEnter();
     }
 
     private void registerAndLinkGuardian() {
-        ConsoleHelper.printSubHeader("REGISTRO Y VINCULACIÓN DE ACUDIENTE");
+        studentView.showRegisterGuardianHeader();
         int studentId = ConsoleInputReader.readInt("Ingrese el ID del estudiante a vincular: ", 1, 99999);
         Optional<Student> stOpt = academicService.getStudentById(studentId);
         if (stOpt.isEmpty()) {
-            ConsoleHelper.printError("El estudiante con ID " + studentId + " no existe.");
+            studentView.showError("El estudiante con ID " + studentId + " no existe.");
             ConsoleInputReader.waitForEnter();
             return;
         }
 
-        System.out.println("Vinculando acudiente para: " + stOpt.get().getFullName());
+        studentView.showLinkGuardianPrompt(stOpt.get().getFullName());
         String docType = ConsoleInputReader.readAdultDocumentType("Tipo documento acudiente (CC/CE/Pasaporte/PPT/PEP/VISA): ");
         String docNum = ConsoleInputReader.readDocumentNumber("Número de documento: ", docType);
         String fName = ConsoleInputReader.readPersonName("Primer nombre: ");
@@ -163,38 +134,35 @@ public class StudentController {
             if (gId != null) {
                 boolean linked = academicService.linkStudentToGuardian(studentId, gId, isPrimary, true);
                 if (linked) {
-                    ConsoleHelper.printSuccess("Acudiente registrado (ID " + gId + ") y vinculado correctamente al estudiante.");
+                    studentView.showSuccess("Acudiente registrado (ID " + gId + ") y vinculado correctamente al estudiante.");
                 } else {
-                    ConsoleHelper.printWarning("Acudiente registrado pero ocurrió un error al vincularlo.");
+                    studentView.showWarning("Acudiente registrado pero ocurrió un error al vincularlo.");
                 }
             } else {
-                ConsoleHelper.printError("No se pudo registrar el acudiente.");
+                studentView.showError("No se pudo registrar el acudiente.");
             }
         } catch (IllegalArgumentException e) {
-            ConsoleHelper.printError("Validación fallida: " + e.getMessage());
+            studentView.showError("Validación fallida: " + e.getMessage());
         } catch (IllegalStateException e) {
-            ConsoleHelper.printError(e.getMessage());
+            studentView.showError(e.getMessage());
         } catch (Exception e) {
-            ConsoleHelper.printError("Error al registrar acudiente: " + e.getMessage());
+            studentView.showError("Error al registrar acudiente: " + e.getMessage());
         }
         ConsoleInputReader.waitForEnter();
     }
 
     private void enrollInGrade() {
-        ConsoleHelper.printSubHeader("MATRÍCULA DE ESTUDIANTE EN GRADO ACADÉMICO");
+        studentView.showEnrollGradeHeader();
         int studentId = ConsoleInputReader.readInt("Ingrese el ID del estudiante: ", 1, 99999);
         Optional<Student> stOpt = academicService.getStudentById(studentId);
         if (stOpt.isEmpty()) {
-            ConsoleHelper.printError("Estudiante no encontrado.");
+            studentView.showError("Estudiante no encontrado.");
             ConsoleInputReader.waitForEnter();
             return;
         }
 
-        System.out.println("\nGrados Académicos Disponibles:");
         List<AcademicGrade> grades = academicService.getAllGrades();
-        for (AcademicGrade gr : grades) {
-            System.out.printf("  [%2d] %-15s (Nivel: %d)%n", gr.getIdGrade(), gr.getGradeName(), gr.getNumericLevel());
-        }
+        studentView.showAvailableGrades(grades);
 
         int gradeId = ConsoleInputReader.readInt("Seleccione el ID del grado: ", 1, grades.size());
         int year = ConsoleInputReader.readInt("Año académico (ej: 2024): ", 2020, 2030);
@@ -202,13 +170,13 @@ public class StudentController {
         try {
             boolean enrolled = academicService.enrollStudentInGrade(studentId, gradeId, year);
             if (enrolled) {
-                ConsoleHelper.printSuccess(String.format("Estudiante '%s' matriculado exitosamente en el grado seleccionado para el año %d.",
+                studentView.showSuccess(String.format("Estudiante '%s' matriculado exitosamente en el grado seleccionado para el año %d.",
                         stOpt.get().getFullName(), year));
             } else {
-                ConsoleHelper.printError("Error al procesar la matrícula.");
+                studentView.showError("Error al procesar la matrícula.");
             }
         } catch (Exception e) {
-            ConsoleHelper.printError("Error al matricular: " + e.getMessage());
+            studentView.showError("Error al matricular: " + e.getMessage());
         }
         ConsoleInputReader.waitForEnter();
     }

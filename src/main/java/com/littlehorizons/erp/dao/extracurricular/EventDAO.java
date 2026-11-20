@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-public class EventDAO {
+public class EventDAO implements EventRepository {
 
     public Integer save(SchoolEvent event) {
         String sql = "INSERT INTO eventos (nombre_evento, descripcion, tipo_evento, fecha_evento, lugar, " +

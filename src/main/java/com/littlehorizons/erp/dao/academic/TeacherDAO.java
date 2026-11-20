@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-public class TeacherDAO {
+public class TeacherDAO implements TeacherRepository {
 
     public Integer save(Teacher teacher) {
         String sql = "INSERT INTO profesores (tipo_documento, numero_documento, primer_nombre, segundo_nombre, " +
