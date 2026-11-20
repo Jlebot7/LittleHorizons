@@ -1,0 +1,13 @@
+id_estudiante;id_materia;fecha;estado
+1;5;2024-10-07;Presente
+2;5;2024-10-07;Ausente
+3;5;2024-10-07;Presente
+4;5;2024-10-07;Tardanza
+5;5;2024-10-07;Excusa Médica
+6;4;2024-10-07;Presente
+7;4;2024-10-07;Presente
+8;4;2024-10-07;Ausente
+9;4;2024-10-07;Presente
+10;4;2024-10-07;Tardanza
+1;4;2024-10-08;Presente
+2;4;2024-10-08;Excusa Médica
