@@ -1,5 +1,7 @@
 package com.littlehorizons.erp;
 
+import com.littlehorizons.erp.service.DatabaseBootstrapService;
+import com.littlehorizons.erp.service.IDatabaseBootstrapService;
 import com.littlehorizons.erp.util.LoggerUtil;
 import com.littlehorizons.erp.view.IMainMenuView;
 import com.littlehorizons.erp.view.MainMenuView;
@@ -9,6 +11,9 @@ public class Main {
     public static void main(String[] args) {
         LoggerUtil.info("Starting Little Horizons ERP Educational Management System...");
         try {
+            IDatabaseBootstrapService bootstrapService = new DatabaseBootstrapService();
+            bootstrapService.bootstrapDatabase();
+
             IMainMenuView mainMenuView = new MainMenuView();
             mainMenuView.start();
         } catch (Exception e) {

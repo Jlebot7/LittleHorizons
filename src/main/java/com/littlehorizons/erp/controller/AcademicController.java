@@ -4,13 +4,19 @@ import com.littlehorizons.erp.model.academic.AcademicRecord;
 import com.littlehorizons.erp.model.academic.Attendance;
 import com.littlehorizons.erp.model.academic.Student;
 import com.littlehorizons.erp.model.academic.Subject;
+import com.littlehorizons.erp.model.report.AttendanceSummaryReport;
+import com.littlehorizons.erp.service.AttendanceReportService;
 import com.littlehorizons.erp.service.IAcademicService;
+import com.littlehorizons.erp.service.IAttendanceReportService;
 import com.littlehorizons.erp.util.ConsoleInputReader;
 import com.littlehorizons.erp.view.AcademicConsoleView;
 import com.littlehorizons.erp.view.IAcademicView;
 
+import java.io.File;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -19,21 +25,27 @@ public class AcademicController {
 
     private final IAcademicService academicService;
     private final IAcademicView academicView;
+    private final IAttendanceReportService attendanceReportService;
 
     public AcademicController(IAcademicService academicService) {
-        this(academicService, new AcademicConsoleView());
+        this(academicService, new AcademicConsoleView(), new AttendanceReportService());
     }
 
     public AcademicController(IAcademicService academicService, IAcademicView academicView) {
+        this(academicService, academicView, new AttendanceReportService());
+    }
+
+    public AcademicController(IAcademicService academicService, IAcademicView academicView, IAttendanceReportService attendanceReportService) {
         this.academicService = academicService;
         this.academicView = academicView;
+        this.attendanceReportService = attendanceReportService;
     }
 
     public void run() {
         boolean back = false;
         while (!back) {
             academicView.showMenu();
-            int option = ConsoleInputReader.readInt("Seleccione una opción: ", 0, 8);
+            int option = ConsoleInputReader.readInt("Seleccione una opción: ", 0, 9);
             switch (option) {
                 case 1 -> recordGrade();
                 case 2 -> viewAcademicHistory();
@@ -43,6 +55,7 @@ public class AcademicController {
                 case 6 -> showExcessiveAbsencesReport();
                 case 7 -> enrollStudentInSubject();
                 case 8 -> listSubjects();
+                case 9 -> generateAttendanceReport();
                 case 0 -> back = true;
             }
         }
@@ -186,6 +199,20 @@ public class AcademicController {
     private void listSubjects() {
         List<Subject> subjects = academicService.getAllSubjects();
         academicView.showSubjects(subjects);
+        ConsoleInputReader.waitForEnter();
+    }
+
+    private void generateAttendanceReport() {
+        try {
+            List<AttendanceSummaryReport> reports = attendanceReportService.generateConsolidatedReport();
+            String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
+            String destinationPath = "reportes/reporte_asistencias_" + timestamp + ".txt";
+            File savedFile = attendanceReportService.exportReportToText(reports, destinationPath);
+            String reportText = attendanceReportService.formatReportAsText(reports);
+            academicView.showAttendanceReport(reportText, savedFile.getPath());
+        } catch (Exception e) {
+            academicView.showError("Error al generar reporte de asistencia: " + e.getMessage());
+        }
         ConsoleInputReader.waitForEnter();
     }
 }

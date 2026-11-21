@@ -8,4 +8,5 @@ public interface AttendanceRepository {
     boolean recordAttendance(Attendance attendance);
     List<Attendance> findByStudent(int studentId);
     List<Attendance> findAllRecent();
+    List<Attendance> findAll();
 }

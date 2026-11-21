@@ -23,6 +23,7 @@ public class AcademicConsoleView implements IAcademicView {
         System.out.println("6. Reporte de estudiantes con inasistencias preocupantes (>=3)");
         System.out.println("7. Inscribir estudiante en una materia");
         System.out.println("8. Listar catálogo de materias");
+        System.out.println("9. Generar y exportar reporte consolidado de asistencia (TXT con Stream API)");
         System.out.println("0. Regresar al Menú Principal");
         System.out.println();
     }
@@ -46,11 +47,11 @@ public class AcademicConsoleView implements IAcademicView {
             System.out.printf("%-6s | %-6s | %-8s | %-28s | %-6s | %-20s%n", "AÑO", "PER", "CÓDIGO", "MATERIA", "NOTA", "DOCENTE");
             System.out.println("─".repeat(85));
             for (AcademicRecord r : history) {
-                System.out.printf("%-6d | %-6s | %-8s | %-28s | %-6.1f | %-20s%n",
+                System.out.printf("%-6d | %-6s | %-8s | %-28s | %-6s | %-20s%n",
                         r.getAcademicYear(), r.getAcademicPeriod(),
                         "SUB-" + r.getIdSubject(),
                         r.getSubjectName() != null ? r.getSubjectName() : ("ID " + r.getIdSubject()),
-                        r.getGradeValue(),
+                        r.getGradeValue() != null ? r.getGradeValue().toString() : "-",
                         r.getTeacherName() != null ? r.getTeacherName() : ("ID " + r.getIdTeacher()));
             }
             System.out.println("─".repeat(85));
@@ -130,6 +131,15 @@ public class AcademicConsoleView implements IAcademicView {
                         s.getIdSubject(), s.getSubjectCode(), s.getSubjectName(), s.getIdGrade(), s.getWeeklyHours());
             }
             System.out.println("─".repeat(75));
+        }
+    }
+
+    @Override
+    public void showAttendanceReport(String reportText, String savedFilePath) {
+        ConsoleHelper.printSubHeader("REPORTE CONSOLIDADO DE ASISTENCIAS");
+        System.out.println(reportText);
+        if (savedFilePath != null && !savedFilePath.isBlank()) {
+            ConsoleHelper.printSuccess("Archivo TXT generado exitosamente en: " + savedFilePath);
         }
     }
 

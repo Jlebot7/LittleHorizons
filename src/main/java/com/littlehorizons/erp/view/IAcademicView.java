@@ -22,6 +22,7 @@ public interface IAcademicView {
     void showExcessiveAbsencesReport(Map<Integer, Long> absences, Function<Integer, Optional<Student>> studentResolver);
     void showEnrollSubjectHeader();
     void showSubjects(List<Subject> subjects);
+    void showAttendanceReport(String reportText, String savedFilePath);
     void showSuccess(String message);
     void showError(String message);
     void showWarning(String message);

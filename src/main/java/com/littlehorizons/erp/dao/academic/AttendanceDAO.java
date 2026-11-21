@@ -89,6 +89,28 @@ public class AttendanceDAO implements AttendanceRepository {
         return list;
     }
 
+    public List<Attendance> findAll() {
+        List<Attendance> list = new ArrayList<>();
+        String sql = "SELECT a.*, CONCAT(e.primer_nombre, ' ', e.primer_apellido) AS nom_estudiante, " +
+                "m.nombre_materia " +
+                "FROM asistencias a " +
+                "JOIN estudiantes e ON a.id_estudiante = e.id_estudiante " +
+                "JOIN materias m ON a.id_materia = m.id_materia " +
+                "ORDER BY a.fecha_asistencia DESC, e.primer_apellido, e.primer_nombre";
+
+        try (Connection conn = DatabaseConfig.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+            while (rs.next()) {
+                list.add(mapResultSetToAttendance(rs));
+            }
+        } catch (SQLException e) {
+            LoggerUtil.error("Error finding all attendance records", e);
+        }
+        return list;
+    }
+
     private Attendance mapResultSetToAttendance(ResultSet rs) throws SQLException {
         Attendance a = new Attendance();
         a.setIdAttendance(rs.getInt("id_asistencia"));

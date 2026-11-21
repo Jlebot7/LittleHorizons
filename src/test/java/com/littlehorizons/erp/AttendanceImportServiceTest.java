@@ -91,6 +91,7 @@ class AttendanceImportServiceTest {
             public boolean recordAttendance(Attendance a) { return true; }
             public java.util.List<Attendance> findByStudent(int stId) { return java.util.List.of(); }
             public java.util.List<Attendance> findAllRecent() { return java.util.List.of(); }
+            public java.util.List<Attendance> findAll() { return java.util.List.of(); }
         };
 
         AttendanceImportService service = new AttendanceImportService(mockAttendanceRepo, mockStudentRepo, mockSubjectRepo);
