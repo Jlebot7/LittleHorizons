@@ -62,6 +62,14 @@ public class DatabaseBootstrapService implements IDatabaseBootstrapService {
             return;
         }
 
+        try {
+            ProcessBuilder wslPb = new ProcessBuilder("wsl", "-e", "service", "mysql", "start");
+            wslPb.redirectErrorStream(true);
+            Process wslProcess = wslPb.start();
+            wslProcess.waitFor();
+        } catch (Exception ignored) {
+        }
+
         String[] serviceNames = {"MySQL80", "MySQL", "MySQL84", "mariadb"};
         for (String serviceName : serviceNames) {
             try {
