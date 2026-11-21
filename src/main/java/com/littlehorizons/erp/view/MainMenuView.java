@@ -2,6 +2,7 @@ package com.littlehorizons.erp.view;
 
 import com.littlehorizons.erp.config.DatabaseConfig;
 import com.littlehorizons.erp.controller.*;
+import com.littlehorizons.erp.model.academic.AttendanceImportResult;
 import com.littlehorizons.erp.service.*;
 import com.littlehorizons.erp.util.ConsoleInputReader;
 
@@ -14,14 +15,20 @@ public class MainMenuView implements IMainMenuView {
     private final FinanceController financeController;
     private final ResourceController resourceController;
     private final ReportsController reportsController;
+    private final IAttendanceImportService attendanceImportService;
 
     public MainMenuView() {
+        this(new AttendanceImportService());
+    }
+
+    public MainMenuView(IAttendanceImportService attendanceImportService) {
         IAcademicService academicService = new AcademicService();
         IExtracurricularService extracurricularService = new ExtracurricularService();
         IFinanceService financeService = new FinanceService();
         IResourceService resourceService = new ResourceService();
         IReportsService reportsService = new ReportsService(academicService, extracurricularService, financeService, resourceService);
 
+        this.attendanceImportService = attendanceImportService;
         this.studentController = new StudentController(academicService, new StudentConsoleView());
         this.academicController = new AcademicController(academicService, new AcademicConsoleView());
         this.teacherController = new TeacherController(academicService, new TeacherConsoleView());
@@ -44,10 +51,11 @@ public class MainMenuView implements IMainMenuView {
             System.out.println("6. Gestión de Recursos (Biblioteca y Laboratorios)");
             System.out.println("7. Reportes y Estadísticas Institucionales");
             System.out.println("8. Diagnóstico y Configuración de Base de Datos");
-            System.out.println("9. Salir");
+            System.out.println("9. TEST - Importar Asistencias desde CSV");
+            System.out.println("10. Salir");
             System.out.println();
 
-            int choice = ConsoleInputReader.readInt("Seleccione una opción: ", 1, 9);
+            int choice = ConsoleInputReader.readInt("Seleccione una opción: ", 1, 10);
             switch (choice) {
                 case 1 -> studentController.run();
                 case 2 -> academicController.run();
@@ -57,13 +65,36 @@ public class MainMenuView implements IMainMenuView {
                 case 6 -> resourceController.run();
                 case 7 -> reportsController.run();
                 case 8 -> showDatabaseDiagnostic();
-                case 9 -> {
+                case 9 -> importAttendanceFromCsv();
+                case 10 -> {
                     exit = true;
                     System.out.println("\nCerrando Little Horizons ERP... ¡Hasta pronto!");
                     DatabaseConfig.close();
                 }
             }
         }
+    }
+
+    private void importAttendanceFromCsv() {
+        AttendanceImportResult result = attendanceImportService.importDefaultCsv();
+        if (result.hasError()) {
+            System.out.println(result.errorMessage());
+            return;
+        }
+
+        System.out.println();
+        System.out.println("╔══════════════════════════════════════════════════════════════════╗");
+        System.out.println("║           REPORTE DE IMPORTACIÓN DE ASISTENCIAS                  ║");
+        System.out.println("╚══════════════════════════════════════════════════════════════════╝");
+        System.out.println();
+        System.out.println("Total de líneas en el archivo: " + result.totalLines());
+        System.out.println("Líneas procesadas exitosamente: " + result.successLines());
+        System.out.println("Líneas con errores (no procesadas): " + result.errorLines());
+        System.out.println();
+        System.out.println("═══════════════════════════════════════════════════════════════════");
+        System.out.println("Presione Enter para volver al menú principal...");
+        System.out.println("═══════════════════════════════════════════════════════════════════");
+        ConsoleInputReader.waitForEnter();
     }
 
     private void showDatabaseDiagnostic() {

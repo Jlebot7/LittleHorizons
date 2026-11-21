@@ -18,6 +18,7 @@ public class DatabaseConnectivityTest {
 
     @Test
     void testLiveDatabaseConnection() {
+        org.junit.jupiter.api.Assumptions.assumeTrue(DatabaseConfig.testConnection(), "MySQL is offline");
         try (Connection conn = DatabaseConfig.getConnection();
              Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery("SELECT COUNT(*) FROM estudiantes")) {
@@ -31,6 +32,7 @@ public class DatabaseConnectivityTest {
 
     @Test
     void testStudentDaoFindAll() {
+        org.junit.jupiter.api.Assumptions.assumeTrue(DatabaseConfig.testConnection(), "MySQL is offline");
         try {
             StudentDAO dao = new StudentDAO();
             List<Student> students = dao.findAll();
